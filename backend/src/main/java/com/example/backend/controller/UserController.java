@@ -1,7 +1,10 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,8 +34,15 @@ public class UserController {
         return userService.getUserById(id);
     }
 
-    @PostMapping
+    @PostMapping("/login")
+    public User signIn(@RequestBody LoginRequestDto userLoginRequest) {
+        return userService.signIn(userLoginRequest);
+    }
+
+    @PostMapping("/users")
     public User createUser(@RequestBody User user) {
+//        String createdUser = userService.createUser(user);
+//        ResponseEntity<User> userResponseEntity = new ResponseEntity<>(user, HttpStatus.CREATED);
         return userService.createUser(user);
     }
 
