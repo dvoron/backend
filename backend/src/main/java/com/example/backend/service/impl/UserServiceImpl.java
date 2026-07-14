@@ -9,8 +9,10 @@ import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.UserService;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,9 +22,11 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -39,9 +43,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User signIn(LoginRequestDto userLoginRequest) {
+//        Authentication authentication =
+//                authenticationManager.authenticate(
+//                        new UsernamePasswordAuthenticationToken(
+//                                request.username(),
+//                                request.password()
+//                        )
+//                );
+//        boolean passwordMatchesHash = passwordEncoder.matches()
         if (userRepository.existsByEmail(userLoginRequest.getLogin())) {
             Optional<User> user = userRepository.findByEmail(userLoginRequest.getLogin());
-            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
+            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
+//            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
                 System.out.println("email and password Success");
                 return user.get();
             } else {
@@ -50,7 +63,8 @@ public class UserServiceImpl implements UserService {
             }
         } else if (userRepository.existsByUsername(userLoginRequest.getLogin())) {
             Optional<User> user = userRepository.findByUsername(userLoginRequest.getLogin());
-            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
+            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
+//            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
                 System.out.println("username and password Success");
                 return user.get();
             } else {
@@ -68,6 +82,8 @@ public class UserServiceImpl implements UserService {
         } else if (userRepository.findByUsername(user.getName()).isPresent()) {
             throw new UsernameAlreadyTakenException(user.getName());
         }
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
         return userRepository.save(user);
     }
 
