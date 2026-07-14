@@ -8,7 +8,6 @@ import com.example.backend.exception.WrongLoginCredentialsException;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.repository.UserRepository;
-import com.example.backend.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,7 @@ import java.util.Optional;
 
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,19 +26,16 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    @Override
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
     }
 
-    @Override
     public User signIn(LoginRequestDto userLoginRequest) {
 //        Authentication authentication =
 //                authenticationManager.authenticate(
@@ -73,7 +69,6 @@ public class UserServiceImpl implements UserService {
         throw new WrongLoginCredentialsException();
     }
 
-    @Override
     public User createUser(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new EmailAlreadyTakenException(user.getEmail());
@@ -85,7 +80,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    @Override
     public User updateUser(Long id, User user) {
 
         User existingUser = userRepository.findById(id)
@@ -98,7 +92,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(existingUser);
     }
 
-    @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }

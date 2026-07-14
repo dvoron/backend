@@ -4,7 +4,6 @@ import com.example.backend.exception.InvalidRefreshTokenException;
 import com.example.backend.model.dto.SessionCreateResult;
 import com.example.backend.model.entity.UserSession;
 import com.example.backend.repository.UserSessionRepository;
-import com.example.backend.service.SessionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +17,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @Service
-public class SessionServiceImpl implements SessionService {
+public class SessionServiceImpl {
 
     private final UserSessionRepository sessionRepository;
 
@@ -29,7 +28,6 @@ public class SessionServiceImpl implements SessionService {
         this.sessionRepository = sessionRepository;
     }
 
-    @Override
     public SessionCreateResult createSession(Long userId) {
         String rawToken = UUID.randomUUID().toString();
 
@@ -44,7 +42,6 @@ public class SessionServiceImpl implements SessionService {
         return new SessionCreateResult(saved.getId(), rawToken, userId);
     }
 
-    @Override
     @Transactional
     public SessionCreateResult rotateSession(String rawRefreshToken) {
         UserSession session = sessionRepository
@@ -63,7 +60,6 @@ public class SessionServiceImpl implements SessionService {
         return createSession(session.getUserId());
     }
 
-    @Override
     public void revokeSession(UUID sessionId) {
         UserSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));

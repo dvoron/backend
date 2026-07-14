@@ -4,7 +4,7 @@ import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RefreshRequestDto;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.AuthService;
+import com.example.backend.service.impl.AuthServiceImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,9 +17,9 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthServiceImpl authService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthServiceImpl authService) {
         this.authService = authService;
     }
 

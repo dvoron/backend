@@ -2,7 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.UserService;
+import com.example.backend.service.impl.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +14,9 @@ import java.util.List;
 //@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
     @GetMapping("/userHello")

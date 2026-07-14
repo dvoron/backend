@@ -4,39 +4,33 @@ import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.SessionCreateResult;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.AuthService;
-import com.example.backend.service.SessionService;
-import com.example.backend.service.UserService;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
-public class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl {
 
-    private final UserService userService;
+    private final UserServiceImpl userService;
     private final JwtService jwtService;
-    private final SessionService sessionService;
+    private final SessionServiceImpl sessionService;
 
-    public AuthServiceImpl(UserService userService, JwtService jwtService, SessionService sessionService) {
+    public AuthServiceImpl(UserServiceImpl userService, JwtService jwtService, SessionServiceImpl sessionService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.sessionService = sessionService;
     }
 
-    @Override
     public AuthResponseDto login(LoginRequestDto request) {
         User user = userService.signIn(request);
         return issueTokenPair(user);
     }
 
-    @Override
     public AuthResponseDto register(User user) {
         User created = userService.createUser(user);
         return issueTokenPair(created);
     }
 
-    @Override
     public AuthResponseDto refresh(String rawRefreshToken) {
         SessionCreateResult session = sessionService.rotateSession(rawRefreshToken);
         User user = userService.getUserById(session.userId());
@@ -44,7 +38,6 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponseDto(accessToken, session.rawRefreshToken());
     }
 
-    @Override
     public void logout(UUID sessionId) {
         sessionService.revokeSession(sessionId);
     }
