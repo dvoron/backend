@@ -2,12 +2,12 @@ package com.example.backend.config;
 
 import com.example.backend.service.impl.JwtService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -33,25 +33,37 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7).trim();
+
+        // Handle case where user pasted "Bearer <token>" in Swagger UI box
+        if (token.toLowerCase().startsWith("bearer ")) {
+            token = token.substring(7).trim();
+        }
 
         try {
             Claims claims = jwtService.validate(token);
             Long userId = Long.parseLong(claims.getSubject());
-            UUID sessionId = UUID.fromString(claims.get("sid", String.class));
+
+            String sidStr = claims.get("sid", String.class);
+            UUID sessionId = sidStr != null ? UUID.fromString(sidStr) : null;
+
+            String role = claims.get("role", String.class);
+            List<SimpleGrantedAuthority> authorities = (role != null)
+                    ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    : List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userId, sessionId, List.of()
+                    userId, sessionId, authorities
             );
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-        } catch (JwtException | IllegalArgumentException ignored) {
+        } catch (Exception ignored) {
             // Invalid token — request continues unauthenticated
         }
 

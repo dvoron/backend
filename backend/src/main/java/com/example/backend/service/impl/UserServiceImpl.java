@@ -86,8 +86,10 @@ public class UserServiceImpl {
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
-//        existingUser.setName(user.getName());
+        //rework this later to be prettier/better done
+        existingUser.setName(user.getName());
         existingUser.setEmail(user.getEmail());
+//        existingUser.setPassword(user.getPassword());
 
         return userRepository.save(existingUser);
     }
