@@ -89,7 +89,9 @@ public class UserServiceImpl {
         //rework this later to be prettier/better done
         existingUser.setName(user.getName());
         existingUser.setEmail(user.getEmail());
-//        existingUser.setPassword(user.getPassword());
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
+        existingUser.setPassword(user.getPassword());
 
         return userRepository.save(existingUser);
     }

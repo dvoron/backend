@@ -20,11 +20,11 @@ public class UserController {
         this.userService = userService;
     }
 
-    @Operation(summary = "Hello check", description = "Simple health/hello endpoint for users")
-    @GetMapping("/userHello")
-    public String helloUser() {
-        return "Hello from Spring Boot. If you see this front got a response from backend";
-    }
+//    @Operation(summary = "Hello check", description = "Simple health/hello endpoint for users")
+//    @GetMapping("/userHello")
+//    public String helloUser() {
+//        return "Hello from Spring Boot. If you see this front got a response from backend";
+//    }
 
     @Operation(summary = "Get all users", description = "Retrieves a list of all registered users")
     @GetMapping
@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @Operation(summary = "Create user", description = "Creates a new user entity")
-    @PostMapping("/users")
+    @PostMapping("/createUser")
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
