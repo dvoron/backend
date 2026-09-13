@@ -54,9 +54,9 @@ public class UserController {
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable Long id,
-            @RequestBody User user) {
+            @RequestBody com.example.backend.model.dto.UpdateUserRequestDto userDto) {
 
-        return userService.updateUser(id, user);
+        return userService.updateUser(id, userDto);
     }
 
     @Operation(summary = "Delete user", description = "Deletes a user by user ID")

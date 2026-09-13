@@ -80,18 +80,25 @@ public class UserServiceImpl {
         return userRepository.save(user);
     }
 
-    public User updateUser(Long id, User user) {
+    public User updateUser(Long id, com.example.backend.model.dto.UpdateUserRequestDto dto) {
 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
-        //rework this later to be prettier/better done
-        existingUser.setName(user.getName());
-        existingUser.setEmail(user.getEmail());
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
-        existingUser.setPassword(user.getPassword());
+        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            existingUser.setName(dto.getUsername());
+        }
+        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            existingUser.setEmail(dto.getEmail());
+        }
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+            if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
+                throw new IllegalArgumentException("Invalid old password");
+            }
+            String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
+            existingUser.setPassword(hashedPassword);
+        }
 
         return userRepository.save(existingUser);
     }
