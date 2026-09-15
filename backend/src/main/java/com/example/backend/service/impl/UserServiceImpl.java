@@ -6,6 +6,7 @@ import com.example.backend.exception.EmailAlreadyTakenException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
 import com.example.backend.exception.WrongLoginCredentialsException;
 import com.example.backend.model.dto.LoginRequestDto;
+import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,13 +70,16 @@ public class UserServiceImpl {
         throw new WrongLoginCredentialsException();
     }
 
-    public User createUser(User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new EmailAlreadyTakenException(user.getEmail());
-        } else if (userRepository.findByUsername(user.getName()).isPresent()) {
-            throw new UsernameAlreadyTakenException(user.getName());
+    public User createUser(RegisterRequestDto request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new EmailAlreadyTakenException(request.getEmail());
+        } else if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new UsernameAlreadyTakenException(request.getUsername());
         }
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        User user = new User();
+        user.setName(request.getUsername());
+        user.setEmail(request.getEmail());
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
         user.setPassword(hashedPassword);
         return userRepository.save(user);
     }

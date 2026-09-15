@@ -2,6 +2,7 @@ package com.example.backend.service.impl;
 
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
+import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.model.dto.SessionCreateResult;
 import com.example.backend.model.entity.User;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,8 @@ public class AuthServiceImpl {
         return issueTokenPair(user);
     }
 
-    public AuthResponseDto register(User user) {
-        User created = userService.createUser(user);
+    public AuthResponseDto register(RegisterRequestDto request) {
+        User created = userService.createUser(request);
         return issueTokenPair(created);
     }
 

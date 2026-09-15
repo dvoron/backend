@@ -3,7 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RefreshRequestDto;
-import com.example.backend.model.entity.User;
+import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.service.impl.AuthServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,8 +35,8 @@ public class AuthController {
 
     @Operation(summary = "Register user", description = "Registers a new user and returns JWT access and refresh tokens")
     @PostMapping("/register")
-    public AuthResponseDto register(@RequestBody User user) {
-        return authService.register(user);
+    public AuthResponseDto register(@RequestBody RegisterRequestDto request) {
+        return authService.register(request);
     }
 
     @Operation(summary = "Refresh JWT token", description = "Obtains new JWT tokens using a valid refresh token")
