@@ -11,4 +11,6 @@ public interface ForumService {
     List<PostDto> getAllPosts();
     PostDto createPost(CreatePostRequest request, Long userId);
     CommentDto createComment(CreateCommentRequest request, Long userId);
+    List<PostDto> getPostsByUserId(Long userId);
+    List<CommentDto> getCommentsByUserId(Long userId);
 }

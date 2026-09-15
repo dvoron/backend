@@ -40,4 +40,16 @@ public class ForumController {
         CommentDto created = forumService.createComment(request, userId);
         return ResponseEntity.ok(created);
     }
+
+    @GetMapping("/users/{userId}/posts")
+    public ResponseEntity<List<PostDto>> getPostsByUserId(@PathVariable Long userId) {
+        List<PostDto> posts = forumService.getPostsByUserId(userId);
+        return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/users/{userId}/comments")
+    public ResponseEntity<List<CommentDto>> getCommentsByUserId(@PathVariable Long userId) {
+        List<CommentDto> comments = forumService.getCommentsByUserId(userId);
+        return ResponseEntity.ok(comments);
+    }
 }

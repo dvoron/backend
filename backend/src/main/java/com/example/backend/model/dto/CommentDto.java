@@ -8,6 +8,8 @@ public class CommentDto {
     private String content;
     private String timestamp;
     private List<CommentDto> replies;
+    private String postTitle;
+    private Long postId;
 
     public CommentDto() {}
 
@@ -49,5 +51,21 @@ public class CommentDto {
 
     public void setReplies(List<CommentDto> replies) {
         this.replies = replies;
+    }
+
+    public String getPostTitle() {
+        return postTitle;
+    }
+
+    public void setPostTitle(String postTitle) {
+        this.postTitle = postTitle;
+    }
+
+    public Long getPostId() {
+        return postId;
+    }
+
+    public void setPostId(Long postId) {
+        this.postId = postId;
     }
 }

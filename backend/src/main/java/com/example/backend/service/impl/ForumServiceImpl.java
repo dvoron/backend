@@ -83,6 +83,20 @@ public class ForumServiceImpl implements ForumService {
         return mapToDto(saved);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostDto> getPostsByUserId(Long userId) {
+        List<Post> posts = postRepository.findByAuthorIdOrderByTimestampDesc(userId);
+        return posts.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommentDto> getCommentsByUserId(Long userId) {
+        List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(userId);
+        return comments.stream().map(this::mapToDtoWithPostInfo).collect(Collectors.toList());
+    }
+
     private PostDto mapToDto(Post post) {
         PostDto dto = new PostDto();
         dto.setId(post.getId());
@@ -109,11 +123,36 @@ public class ForumServiceImpl implements ForumService {
         dto.setAuthor(comment.getAuthor().getName());
         dto.setTimestamp(comment.getTimestamp().format(FORMATTER));
 
+        if (comment.getPost() != null) {
+            dto.setPostTitle(comment.getPost().getTitle());
+            dto.setPostId(comment.getPost().getId());
+        }
+
         List<CommentDto> replies = comment.getReplies().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
         dto.setReplies(replies);
 
+        return dto;
+    }
+
+    private CommentDto mapToDtoWithPostInfo(Comment comment) {
+        CommentDto dto = mapToDto(comment);
+        // Post info is already set in mapToDto if comment.getPost() is not null
+        // But for replies, getPost() might be null depending on how the entity is mapped.
+        // Let's ensure post info is set by traversing up if needed.
+        Post post = comment.getPost();
+        Comment current = comment;
+        while (post == null && current.getParentComment() != null) {
+            current = current.getParentComment();
+            post = current.getPost();
+        }
+        
+        if (post != null) {
+            dto.setPostTitle(post.getTitle());
+            dto.setPostId(post.getId());
+        }
+        
         return dto;
     }
 }
