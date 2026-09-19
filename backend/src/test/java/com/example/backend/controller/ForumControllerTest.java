@@ -1,5 +1,7 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.dto.CommentDto;
+import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
 import com.example.backend.service.ForumService;
@@ -84,5 +86,66 @@ class ForumControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("New Post"))
                 .andExpect(jsonPath("$.content").value("New Content"));
+    }
+
+    @Test
+    void createCommentWithUserReturnsOkAndComment() throws Exception {
+        CreateCommentRequest request = new CreateCommentRequest();
+        request.setPostId(1L);
+        request.setContent("New Comment");
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(1L);
+        commentDto.setContent("New Comment");
+        commentDto.setPostId(1L);
+        commentDto.setAuthor("user");
+
+        when(forumService.createComment(any(CreateCommentRequest.class), eq(1L))).thenReturn(commentDto);
+
+        mockMvc.perform(post("/api/forum/comments")
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.content").value("New Comment"))
+                .andExpect(jsonPath("$.postId").value(1))
+                .andExpect(jsonPath("$.author").value("user"));
+    }
+
+    @Test
+    void getPostsByUserIdReturnsOkAndList() throws Exception {
+        PostDto postDto = new PostDto();
+        postDto.setId(1L);
+        postDto.setTitle("User Post");
+        postDto.setContent("User Content");
+
+        when(forumService.getPostsByUserId(1L)).thenReturn(List.of(postDto));
+
+        mockMvc.perform(get("/api/forum/users/1/posts")
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("User Post"))
+                .andExpect(jsonPath("$[0].content").value("User Content"));
+    }
+
+    @Test
+    void getCommentsByUserIdReturnsOkAndList() throws Exception {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(1L);
+        commentDto.setContent("User Comment");
+        commentDto.setPostId(1L);
+
+        when(forumService.getCommentsByUserId(1L)).thenReturn(List.of(commentDto));
+
+        mockMvc.perform(get("/api/forum/users/1/comments")
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].content").value("User Comment"))
+                .andExpect(jsonPath("$[0].postId").value(1));
     }
 }
