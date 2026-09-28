@@ -9,6 +9,10 @@ import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.PostRepository;
+import com.example.backend.repository.CommentRepository;
+import com.example.backend.model.entity.Post;
+import com.example.backend.model.entity.Comment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +24,14 @@ import java.util.Optional;
 public class UserServiceImpl {
 
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -108,6 +116,12 @@ public class UserServiceImpl {
     }
 
     public void deleteUser(Long id) {
+        List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(id);
+        commentRepository.deleteAll(comments);
+        
+        List<Post> posts = postRepository.findByAuthorIdOrderByTimestampDesc(id);
+        postRepository.deleteAll(posts);
+        
         userRepository.deleteById(id);
     }
 

@@ -8,6 +8,8 @@ import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.PostRepository;
+import com.example.backend.repository.CommentRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +30,12 @@ class UserServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -273,8 +281,13 @@ class UserServiceImplTest {
 
     @Test
     void deleteUserCallsRepositoryDeleteById() {
+        when(commentRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
+        when(postRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
+
         userService.deleteUser(1L);
 
+        verify(commentRepository, times(1)).deleteAll(List.of());
+        verify(postRepository, times(1)).deleteAll(List.of());
         verify(userRepository, times(1)).deleteById(1L);
     }
 }
