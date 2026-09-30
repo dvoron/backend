@@ -102,6 +102,26 @@ class AuthControllerTest {
     }
 
     @Test
+    void refreshReturnsBadRequestWhenTokenIsMissing() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Refresh token is missing"));
+    }
+
+    @Test
+    void refreshReturnsBadRequestWhenTokenIsEmpty() throws Exception {
+        RefreshRequestDto request = new RefreshRequestDto();
+        request.setRefreshToken("   ");
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Refresh token is missing"));
+    }
+
+    @Test
     void logoutReturnsOk() throws Exception {
         UUID sessionId = UUID.randomUUID();
 
