@@ -46,7 +46,6 @@ class JwtAuthFilterTest {
         SecurityContextHolder.clearContext();
     }
 
-    // doFilterInternalWithValidTokenGetAuthenticatedSuccessfullyTest
     @Test
     void doFilterInternalWithValidTokenSetsAuthentication() throws ServletException, IOException {
         String token = "valid.token.here";
