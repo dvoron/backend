@@ -1,63 +1,68 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.dto.LoginRequestDto;
+import com.example.backend.model.dto.UserDto;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.UserService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.example.backend.service.impl.UserServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Tag(name = "User Management", description = "Endpoints for managing users")
 @RestController
 @RequestMapping("/api")
-//@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
-    @GetMapping("/userHello")
-    public String helloUser() {
-        return "Hello from Spring Boot. If you see this front got a response from backend";
-    }
 
+    @Operation(summary = "Get all users", description = "Retrieves a list of all registered users")
     @GetMapping
-    public List<User> getUsers() {
-        return userService.getAllUsers();
+    public List<UserDto> getUsers() {
+        return userService.getAllUsers().stream()
+                .map(user -> new UserDto(user.getId(), user.getName(), user.getEmail()))
+                .collect(Collectors.toList());
     }
 
+    @Operation(summary = "Get user by ID", description = "Retrieves user details by user ID")
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public UserDto getUser(@PathVariable Long id, org.springframework.security.core.Authentication authentication) {
+        Long authenticatedUserId = (Long) authentication.getPrincipal();
+        if (!id.equals(authenticatedUserId)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
+        }
+        User user = userService.getUserById(id);
+        return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 
-    @PostMapping("/login")
-    public User signIn(@RequestBody LoginRequestDto userLoginRequest) {
-        return userService.signIn(userLoginRequest);
-    }
-
-    @PostMapping("/users")
-    public User createUser(@RequestBody User user) {
-//        String createdUser = userService.createUser(user);
-//        ResponseEntity<User> userResponseEntity = new ResponseEntity<>(user, HttpStatus.CREATED);
-        return userService.createUser(user);
-    }
-
+    @Operation(summary = "Update user", description = "Updates existing user details by user ID")
     @PutMapping("/{id}")
-    public User updateUser(
+    public UserDto updateUser(
             @PathVariable Long id,
-            @RequestBody User user) {
+            @RequestBody com.example.backend.model.dto.UpdateUserRequestDto userDto,
+            org.springframework.security.core.Authentication authentication) {
 
-        return userService.updateUser(id, user);
+        Long authenticatedUserId = (Long) authentication.getPrincipal();
+        if (!id.equals(authenticatedUserId)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        User user = userService.updateUser(id, userDto);
+        return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 
+    @Operation(summary = "Delete user", description = "Deletes a user by user ID")
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public void deleteUser(@PathVariable Long id, org.springframework.security.core.Authentication authentication) {
+        Long authenticatedUserId = (Long) authentication.getPrincipal();
+        if (!id.equals(authenticatedUserId)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
+        }
         userService.deleteUser(id);
     }
-
 }
-
