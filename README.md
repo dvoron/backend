@@ -13,6 +13,12 @@ Download the installer from [Eclipse Temurin](https://adoptium.net/temurin/relea
 ```cmd
 winget install EclipseAdoptium.Temurin.17.JDK
 ```
+Alternatively, you can install OpenJDK directly via `winget`:
+```cmd
+winget install Microsoft.OpenJDK.17
+# or for Oracle's OpenJDK:
+winget install Oracle.OpenJDK.17
+```
 
 **macOS:**
 Use [Homebrew](https://brew.sh/):
@@ -36,7 +42,7 @@ java -version
 1. **Clone the repository and navigate to the project folder:**
    ```bash
    git clone https://github.com/dvoron/backend.git
-   cd backend/backend
+   cd backend
    ```
 
 3. **Run the Application:**
