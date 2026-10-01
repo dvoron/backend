@@ -6,6 +6,31 @@ This is the backend service for the application, built with Spring Boot.
 
 - **Java 17** must be installed on your system.
 
+### Installing Java 17
+
+**Windows:**
+Download the installer from [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=17) or use `winget`:
+```cmd
+winget install EclipseAdoptium.Temurin.17.JDK
+```
+
+**macOS:**
+Use [Homebrew](https://brew.sh/):
+```bash
+brew install openjdk@17
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install openjdk-17-jdk
+```
+
+**Verify Installation:**
+```bash
+java -version
+```
+
 ## Setup Instructions
 
 1. **Clone the repository and navigate to the project folder:**
