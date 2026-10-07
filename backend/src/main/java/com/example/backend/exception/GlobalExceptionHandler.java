@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(MissingRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRefreshToken(MissingRefreshTokenException ex) {
+        log.warn("Missing refresh token exception: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("MISSING_REFRESH_TOKEN", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Illegal argument exception: {}", ex.getMessage());

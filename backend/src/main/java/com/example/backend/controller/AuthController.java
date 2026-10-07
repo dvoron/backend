@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import com.example.backend.exception.MissingRefreshTokenException;
 
 import java.util.UUID;
 
@@ -74,7 +74,7 @@ public class AuthController {
                                    HttpServletResponse response) {
         String token = refreshTokenCookie != null ? refreshTokenCookie : (request != null ? request.getRefreshToken() : null);
         if (token == null || token.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token is missing");
+            throw new MissingRefreshTokenException("Refresh token is missing");
         }
         AuthResponseDto authResponse = authService.refresh(token);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
