@@ -13,6 +13,8 @@ import com.example.backend.repository.PostRepository;
 import com.example.backend.repository.CommentRepository;
 import com.example.backend.model.entity.Post;
 import com.example.backend.model.entity.Comment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,8 @@ import java.util.Optional;
 
 @Service
 public class UserServiceImpl {
+
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
@@ -46,35 +50,26 @@ public class UserServiceImpl {
     }
 
     public User signIn(LoginRequestDto userLoginRequest) {
-//        Authentication authentication =
-//                authenticationManager.authenticate(
-//                        new UsernamePasswordAuthenticationToken(
-//                                request.username(),
-//                                request.password()
-//                        )
-//                );
-//        boolean passwordMatchesHash = passwordEncoder.matches()
         if (userRepository.existsByEmail(userLoginRequest.getLogin())) {
             Optional<User> user = userRepository.findByEmail(userLoginRequest.getLogin());
             if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-//            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
-                System.out.println("email and password Success");
+                log.info("email and password Success for user: {}", userLoginRequest.getLogin());
                 return user.get();
             } else {
+                log.warn("email and password Failure for user: {}", userLoginRequest.getLogin());
                 throw new WrongLoginCredentialsException();
-//                System.out.println("email and password Failure");
             }
         } else if (userRepository.existsByUsername(userLoginRequest.getLogin())) {
             Optional<User> user = userRepository.findByUsername(userLoginRequest.getLogin());
             if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-//            if (userLoginRequest.getPassword().equals(user.get().getPassword())) {
-                System.out.println("username and password Success");
+                log.info("username and password Success for user: {}", userLoginRequest.getLogin());
                 return user.get();
             } else {
+                log.warn("username and password Failure for user: {}", userLoginRequest.getLogin());
                 throw new WrongLoginCredentialsException();
-//                System.out.println("username and password Failure");
             }
         }
+        log.warn("Login failed: User not found for login: {}", userLoginRequest.getLogin());
         throw new WrongLoginCredentialsException();
     }
 
@@ -125,15 +120,4 @@ public class UserServiceImpl {
         userRepository.deleteById(id);
     }
 
-//    @Override
-//    public Optional<User> doesEmailExist(String email) {
-//        System.out.println("I went inside email");
-//        return Optional.empty();
-//    }
-//
-//    @Override
-//    public Optional<User> doesUsernameExist(String username) {
-//        System.out.println("I went inside username");
-//        return Optional.empty();
-//    }
 }
