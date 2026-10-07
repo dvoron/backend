@@ -106,7 +106,8 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("Refresh token is missing"));
+                .andExpect(jsonPath("$.code").value("MISSING_REFRESH_TOKEN"))
+                .andExpect(jsonPath("$.message").value("Refresh token is missing"));
     }
 
     @Test
@@ -118,7 +119,8 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("Refresh token is missing"));
+                .andExpect(jsonPath("$.code").value("MISSING_REFRESH_TOKEN"))
+                .andExpect(jsonPath("$.message").value("Refresh token is missing"));
     }
 
     @Test

@@ -53,6 +53,14 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse("BAD_REQUEST", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(org.springframework.web.server.ResponseStatusException ex) {
+        log.warn("Response status exception: {}", ex.getMessage());
+        String code = ex.getStatusCode().is4xxClientError() ? "FORBIDDEN" : "ERROR";
+        ErrorResponse error = new ErrorResponse(code, ex.getReason());
+        return ResponseEntity.status(ex.getStatusCode()).body(error);
+    }
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
