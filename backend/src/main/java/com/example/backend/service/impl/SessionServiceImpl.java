@@ -67,6 +67,21 @@ public class SessionServiceImpl {
         sessionRepository.save(session);
     }
 
+    public void revokeAllUserSessions(Long userId) {
+        java.util.List<UserSession> sessions = sessionRepository.findByUserId(userId);
+        for (UserSession session : sessions) {
+            session.setRevoked(true);
+        }
+        sessionRepository.saveAll(sessions);
+    }
+
+    public boolean isSessionValid(UUID sessionId) {
+        if (sessionId == null) return false;
+        return sessionRepository.findById(sessionId)
+                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()))
+                .orElse(false);
+    }
+
     private String hash(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

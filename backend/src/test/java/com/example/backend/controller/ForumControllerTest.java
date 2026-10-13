@@ -6,6 +6,7 @@ import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
 import com.example.backend.service.ForumService;
 import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.impl.SessionServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ class ForumControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private SessionServiceImpl sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 

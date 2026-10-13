@@ -34,7 +34,12 @@ public class AuthServiceImpl {
 
     public AuthResponseDto refresh(String rawRefreshToken) {
         SessionCreateResult session = sessionService.rotateSession(rawRefreshToken);
-        User user = userService.getUserById(session.userId());
+        User user;
+        try {
+            user = userService.getUserById(session.userId());
+        } catch (RuntimeException e) {
+            throw new com.example.backend.exception.InvalidRefreshTokenException();
+        }
         String accessToken = jwtService.generateToken(user, session.sessionId());
         return new AuthResponseDto(accessToken, session.rawRefreshToken());
     }

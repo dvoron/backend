@@ -5,6 +5,7 @@ import com.example.backend.config.SecurityConfig;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.impl.SessionServiceImpl;
 import com.example.backend.service.impl.UserServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class UserControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private SessionServiceImpl sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 

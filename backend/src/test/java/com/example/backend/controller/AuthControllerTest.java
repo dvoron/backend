@@ -45,6 +45,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
+    @MockitoBean
+    private com.example.backend.service.impl.SessionServiceImpl sessionService;
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test

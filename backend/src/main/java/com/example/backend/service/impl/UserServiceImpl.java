@@ -32,12 +32,14 @@ public class UserServiceImpl {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionServiceImpl sessionService;
 
-    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder, SessionServiceImpl sessionService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sessionService = sessionService;
     }
 
     public List<User> getAllUsers() {
@@ -155,6 +157,8 @@ public class UserServiceImpl {
     }
 
     public void deleteUser(Long id) {
+        sessionService.revokeAllUserSessions(id);
+
         List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(id);
         commentRepository.deleteAll(comments);
         
