@@ -7,26 +7,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Tag(name = "User Management", description = "Endpoints for managing users")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserServiceImpl userService;
 
     public UserController(UserServiceImpl userService) {
         this.userService = userService;
-    }
-
-    @Operation(summary = "Get all users", description = "Retrieves a list of all registered users")
-    @GetMapping
-    public List<UserDto> getUsers() {
-        return userService.getAllUsers().stream()
-                .map(user -> new UserDto(user.getId(), user.getName(), user.getEmail()))
-                .collect(Collectors.toList());
     }
 
     @Operation(summary = "Get user by ID", description = "Retrieves user details by user ID")

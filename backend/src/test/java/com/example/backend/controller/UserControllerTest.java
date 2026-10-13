@@ -44,24 +44,6 @@ class UserControllerTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void getUsersReturnsOkAndList() throws Exception {
-        User user = new User();
-        user.setId(1L);
-        user.setName("testuser");
-        user.setEmail("test@example.com");
-
-        when(userService.getAllUsers()).thenReturn(List.of(user));
-
-        mockMvc.perform(get("/api")
-                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].username").value("testuser"))
-                .andExpect(jsonPath("$[0].email").value("test@example.com"));
-    }
-
-    @Test
     void getUserWithMatchingIdReturnsOkAndUser() throws Exception {
         User user = new User();
         user.setId(1L);
@@ -70,7 +52,7 @@ class UserControllerTest {
 
         when(userService.getUserById(1L)).thenReturn(user);
 
-        mockMvc.perform(get("/api/1")
+        mockMvc.perform(get("/api/users/1")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -81,7 +63,7 @@ class UserControllerTest {
 
     @Test
     void getUserWithNonMatchingIdReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/2")
+        mockMvc.perform(get("/api/users/2")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
@@ -100,7 +82,7 @@ class UserControllerTest {
 
         when(userService.updateUser(eq(1L), any(UpdateUserRequestDto.class))).thenReturn(updatedUser);
 
-        mockMvc.perform(put("/api/1")
+        mockMvc.perform(put("/api/users/1")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -115,7 +97,7 @@ class UserControllerTest {
         UpdateUserRequestDto request = new UpdateUserRequestDto();
         request.setUsername("updateduser");
 
-        mockMvc.perform(put("/api/2")
+        mockMvc.perform(put("/api/users/2")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -124,7 +106,7 @@ class UserControllerTest {
 
     @Test
     void deleteUserWithMatchingIdReturnsOk() throws Exception {
-        mockMvc.perform(delete("/api/1")
+        mockMvc.perform(delete("/api/users/1")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))))))
                 .andExpect(status().isOk());
 
@@ -133,7 +115,7 @@ class UserControllerTest {
 
     @Test
     void deleteUserWithNonMatchingIdReturnsForbidden() throws Exception {
-        mockMvc.perform(delete("/api/2")
+        mockMvc.perform(delete("/api/users/2")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))))))
                 .andExpect(status().isForbidden());
     }
