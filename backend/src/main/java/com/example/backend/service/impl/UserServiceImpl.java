@@ -51,30 +51,31 @@ public class UserServiceImpl {
     }
 
     public User signIn(LoginRequestDto userLoginRequest) {
-        if (userRepository.existsByEmail(userLoginRequest.getLogin())) {
-            Optional<User> user = userRepository.findByEmail(userLoginRequest.getLogin());
-            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-                log.info("email and password Success for user: {}", userLoginRequest.getLogin());
-                return user.get();
-            } else {
-                log.warn("email and password Failure for user: {}", userLoginRequest.getLogin());
-                throw new WrongLoginCredentialsException();
+        String login = userLoginRequest.getLogin();
+        
+        if (login.contains("@")) {
+            Optional<User> userOpt = userRepository.findByEmail(login);
+            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
+                log.info("email and password Success for user: {}", login);
+                return userOpt.get();
             }
-        } else if (userRepository.existsByUsername(userLoginRequest.getLogin())) {
-            Optional<User> user = userRepository.findByUsername(userLoginRequest.getLogin());
-            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-                log.info("username and password Success for user: {}", userLoginRequest.getLogin());
-                return user.get();
-            } else {
-                log.warn("username and password Failure for user: {}", userLoginRequest.getLogin());
-                throw new WrongLoginCredentialsException();
+        } else {
+            Optional<User> userOpt = userRepository.findByUsername(login);
+            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
+                log.info("username and password Success for user: {}", login);
+                return userOpt.get();
             }
         }
-        log.warn("Login failed: User not found for login: {}", userLoginRequest.getLogin());
+        
+        log.warn("Login failed: User not found or wrong password for login: {}", login);
         throw new WrongLoginCredentialsException();
     }
 
     public User createUser(RegisterRequestDto request) {
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailAlreadyTakenException(request.getEmail());
         } else if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -111,6 +112,9 @@ public class UserServiceImpl {
             existingUser.setName(dto.getUsername());
         }
         if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            if (!dto.getEmail().contains("@")) {
+                throw new IllegalArgumentException("Invalid email format");
+            }
             Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
             if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
                 throw new EmailAlreadyTakenException(dto.getEmail());

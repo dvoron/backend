@@ -53,7 +53,6 @@ class UserServiceImplTest {
         user.setEmail("test@example.com");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
 
@@ -73,8 +72,6 @@ class UserServiceImplTest {
         user.setName("testuser");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("testuser")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
 
@@ -94,8 +91,6 @@ class UserServiceImplTest {
         user.setName("testuser");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("testuser")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", "hashedPassword")).thenReturn(false);
 
@@ -113,7 +108,6 @@ class UserServiceImplTest {
         user.setEmail("test@example.com");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", "hashedPassword")).thenReturn(false);
 
@@ -174,6 +168,18 @@ class UserServiceImplTest {
     }
 
     @Test
+    void createUserWithInvalidEmailFormatThrowsException() {
+        RegisterRequestDto request = new RegisterRequestDto();
+        request.setEmail("invalidemail");
+        request.setUsername("newuser");
+        request.setPassword("password");
+
+        assertThatThrownBy(() -> userService.createUser(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid email format");
+    }
+
+    @Test
     void getAllUsersReturnsListOfUsers() {
         User user1 = new User();
         user1.setId(1L);
@@ -217,8 +223,7 @@ class UserServiceImplTest {
         request.setLogin("nonexisting");
         request.setPassword("password");
 
-        when(userRepository.existsByEmail("nonexisting")).thenReturn(false);
-        when(userRepository.existsByUsername("nonexisting")).thenReturn(false);
+        when(userRepository.findByUsername("nonexisting")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.signIn(request))
                 .isInstanceOf(WrongLoginCredentialsException.class);
@@ -292,6 +297,22 @@ class UserServiceImplTest {
 
         assertThatThrownBy(() -> userService.updateUser(1L, dto))
                 .isInstanceOf(UsernameAlreadyTakenException.class);
+    }
+
+    @Test
+    void updateUserWithInvalidEmailFormatThrowsException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setEmail("invalidemail");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid email format");
     }
 
     @Test
