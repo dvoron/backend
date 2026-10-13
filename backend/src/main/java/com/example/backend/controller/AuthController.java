@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -53,7 +54,7 @@ public class AuthController {
 
     @Operation(summary = "Login user", description = "Authenticates user credentials and returns JWT access and refresh tokens")
     @PostMapping("/login")
-    public AuthResponseDto login(@RequestBody LoginRequestDto request, HttpServletResponse response) {
+    public AuthResponseDto login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.login(request);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
         return authResponse;
@@ -61,7 +62,7 @@ public class AuthController {
 
     @Operation(summary = "Register user", description = "Registers a new user and returns JWT access and refresh tokens")
     @PostMapping("/register")
-    public AuthResponseDto register(@RequestBody RegisterRequestDto request, HttpServletResponse response) {
+    public AuthResponseDto register(@Valid @RequestBody RegisterRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.register(request);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
         return authResponse;

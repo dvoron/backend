@@ -5,6 +5,7 @@ import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
 import com.example.backend.service.ForumService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -28,14 +29,14 @@ public class ForumController {
     }
 
     @PostMapping("/posts")
-    public ResponseEntity<PostDto> createPost(@RequestBody CreatePostRequest request, Authentication authentication) {
+    public ResponseEntity<PostDto> createPost(@Valid @RequestBody CreatePostRequest request, Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         PostDto created = forumService.createPost(request, userId);
         return ResponseEntity.ok(created);
     }
 
     @PostMapping("/comments")
-    public ResponseEntity<CommentDto> createComment(@RequestBody CreateCommentRequest request, Authentication authentication) {
+    public ResponseEntity<CommentDto> createComment(@Valid @RequestBody CreateCommentRequest request, Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         CommentDto created = forumService.createComment(request, userId);
         return ResponseEntity.ok(created);

@@ -1,8 +1,21 @@
 package com.example.backend.model.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class RegisterRequestDto {
+    @NotBlank
+    @Size(max = 255)
     private String username;
+    
+    @NotBlank
+    @Email
+    @Size(max = 255)
     private String email;
+    
+    @NotBlank
+    @Size(max = 255)
     private String password;
 
     public RegisterRequestDto() {}

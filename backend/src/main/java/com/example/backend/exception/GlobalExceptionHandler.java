@@ -79,6 +79,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
     
     @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(org.springframework.web.bind.MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        log.warn("Validation exception: {}", ex.getMessage());
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .findFirst()
+                .orElse(ex.getMessage());
+        ErrorResponse error = new ErrorResponse("BAD_REQUEST", message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, @Nullable Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
         log.warn("Spring MVC exception: {}", ex.getMessage());
         String code = "ERROR";

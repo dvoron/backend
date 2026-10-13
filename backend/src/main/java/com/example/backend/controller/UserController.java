@@ -5,6 +5,7 @@ import com.example.backend.model.entity.User;
 import com.example.backend.service.impl.UserServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "User Management", description = "Endpoints for managing users")
@@ -33,7 +34,7 @@ public class UserController {
     @PutMapping("/{id}")
     public UserDto updateUser(
             @PathVariable Long id,
-            @RequestBody com.example.backend.model.dto.UpdateUserRequestDto userDto,
+            @Valid @RequestBody com.example.backend.model.dto.UpdateUserRequestDto userDto,
             org.springframework.security.core.Authentication authentication) {
 
         Long authenticatedUserId = (Long) authentication.getPrincipal();
