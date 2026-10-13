@@ -1,5 +1,6 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
@@ -37,7 +38,7 @@ public class AuthServiceImpl {
         User user;
         try {
             user = userService.getUserById(session.userId());
-        } catch (RuntimeException e) {
+        } catch (ResourceNotFoundException e) {
             throw new com.example.backend.exception.InvalidRefreshTokenException();
         }
         String accessToken = jwtService.generateToken(user, session.sessionId());

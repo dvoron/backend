@@ -1,6 +1,7 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.exception.InvalidRefreshTokenException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.SessionCreateResult;
 import com.example.backend.model.entity.UserSession;
 import com.example.backend.repository.UserSessionRepository;
@@ -62,7 +63,7 @@ public class SessionServiceImpl {
 
     public void revokeSession(UUID sessionId) {
         UserSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
         session.setRevoked(true);
         sessionRepository.save(session);
     }

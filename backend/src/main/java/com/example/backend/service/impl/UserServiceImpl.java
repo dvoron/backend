@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 
 
 import com.example.backend.exception.EmailAlreadyTakenException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
 import com.example.backend.exception.WrongLoginCredentialsException;
 import com.example.backend.model.dto.LoginRequestDto;
@@ -49,7 +50,7 @@ public class UserServiceImpl {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException("User not found"));
     }
 
     public User signIn(LoginRequestDto userLoginRequest) {
@@ -107,7 +108,7 @@ public class UserServiceImpl {
 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException("User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
             if (dto.getUsername().contains("@")) {

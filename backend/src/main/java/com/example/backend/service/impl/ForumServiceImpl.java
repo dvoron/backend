@@ -1,5 +1,6 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
@@ -45,7 +46,7 @@ public class ForumServiceImpl implements ForumService {
     @Transactional
     public PostDto createPost(CreatePostRequest request, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Post post = new Post();
         post.setTitle(request.getTitle());
@@ -61,15 +62,15 @@ public class ForumServiceImpl implements ForumService {
     @Transactional
     public CommentDto createComment(CreateCommentRequest request, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Post post = postRepository.findById(request.getPostId())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         Comment parentComment = null;
         if (request.getParentCommentId() != null) {
             parentComment = commentRepository.findById(request.getParentCommentId())
-                    .orElseThrow(() -> new RuntimeException("Parent comment not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
         }
 
         Comment comment = new Comment();
