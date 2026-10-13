@@ -75,6 +75,9 @@ public class UserServiceImpl {
         if (request.getEmail() == null || !request.getEmail().contains("@")) {
             throw new IllegalArgumentException("Invalid email format");
         }
+        if (request.getUsername() != null && request.getUsername().contains("@")) {
+            throw new IllegalArgumentException("Username cannot contain '@'");
+        }
         
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailAlreadyTakenException(request.getEmail());
@@ -105,6 +108,9 @@ public class UserServiceImpl {
                         new RuntimeException("User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            if (dto.getUsername().contains("@")) {
+                throw new IllegalArgumentException("Username cannot contain '@'");
+            }
             Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
             if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
                 throw new UsernameAlreadyTakenException(dto.getUsername());
