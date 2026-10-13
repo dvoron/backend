@@ -140,7 +140,6 @@ public class ForumServiceImpl implements ForumService {
         CommentDto dto = mapToDto(comment);
         // Post info is already set in mapToDto if comment.getPost() is not null
         // But for replies, getPost() might be null depending on how the entity is mapped.
-        // Let's ensure post info is set by traversing up if needed.
         Post post = comment.getPost();
         Comment current = comment;
         while (post == null && current.getParentComment() != null) {
