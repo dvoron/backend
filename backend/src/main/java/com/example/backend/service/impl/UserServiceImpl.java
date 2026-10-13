@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -84,7 +85,16 @@ public class UserServiceImpl {
         user.setEmail(request.getEmail());
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         user.setPassword(hashedPassword);
-        return userRepository.save(user);
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new EmailAlreadyTakenException(request.getEmail());
+            } else if (userRepository.existsByUsername(request.getUsername())) {
+                throw new UsernameAlreadyTakenException(request.getUsername());
+            }
+            throw e;
+        }
     }
 
     public User updateUser(Long id, com.example.backend.model.dto.UpdateUserRequestDto dto) {
@@ -94,9 +104,17 @@ public class UserServiceImpl {
                         new RuntimeException("User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
+            if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
+                throw new UsernameAlreadyTakenException(dto.getUsername());
+            }
             existingUser.setName(dto.getUsername());
         }
         if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
+            if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
+                throw new EmailAlreadyTakenException(dto.getEmail());
+            }
             existingUser.setEmail(dto.getEmail());
         }
         if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
@@ -107,7 +125,23 @@ public class UserServiceImpl {
             existingUser.setPassword(hashedPassword);
         }
 
-        return userRepository.save(existingUser);
+        try {
+            return userRepository.save(existingUser);
+        } catch (DataIntegrityViolationException e) {
+            if (dto.getEmail() != null) {
+                Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
+                if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
+                    throw new EmailAlreadyTakenException(dto.getEmail());
+                }
+            }
+            if (dto.getUsername() != null) {
+                Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
+                if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
+                    throw new UsernameAlreadyTakenException(dto.getUsername());
+                }
+            }
+            throw e;
+        }
     }
 
     public void deleteUser(Long id) {

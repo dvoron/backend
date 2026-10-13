@@ -239,6 +239,8 @@ class UserServiceImplTest {
         dto.setNewPassword("newpassword");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
         when(passwordEncoder.encode("newpassword")).thenReturn("newHashedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
@@ -248,6 +250,48 @@ class UserServiceImplTest {
         assertThat(result.getName()).isEqualTo("newuser");
         assertThat(result.getEmail()).isEqualTo("new@example.com");
         assertThat(result.getPassword()).isEqualTo("newHashedPassword");
+    }
+
+    @Test
+    void updateUserWithExistingEmailThrowsEmailAlreadyTakenException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setName("olduser");
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setEmail("taken@example.com");
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setEmail("taken@example.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(EmailAlreadyTakenException.class);
+    }
+
+    @Test
+    void updateUserWithExistingUsernameThrowsUsernameAlreadyTakenException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setName("olduser");
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setUsername("takenuser");
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setName("takenuser");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(UsernameAlreadyTakenException.class);
     }
 
     @Test
