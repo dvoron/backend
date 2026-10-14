@@ -153,6 +153,7 @@ class ForumServiceImplTest {
 
         Comment parentComment = new Comment();
         parentComment.setId(2L);
+        parentComment.setPost(post);
 
         Comment savedComment = new Comment();
         savedComment.setId(1L);
@@ -221,6 +222,34 @@ class ForumServiceImplTest {
         assertThatThrownBy(() -> forumService.createComment(request, 1L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Parent comment not found");
+    }
+
+    @Test
+    void createCommentWithParentCommentFromDifferentPostThrowsException() {
+        CreateCommentRequest request = new CreateCommentRequest();
+        request.setPostId(1L);
+        request.setParentCommentId(2L);
+
+        User user = new User();
+        user.setId(1L);
+
+        Post post = new Post();
+        post.setId(1L);
+
+        Post differentPost = new Post();
+        differentPost.setId(2L);
+
+        Comment parentComment = new Comment();
+        parentComment.setId(2L);
+        parentComment.setPost(differentPost);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        when(commentRepository.findById(2L)).thenReturn(Optional.of(parentComment));
+
+        assertThatThrownBy(() -> forumService.createComment(request, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Parent comment does not belong to the specified post");
     }
 
     @Test

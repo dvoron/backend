@@ -71,6 +71,10 @@ public class ForumServiceImpl implements ForumService {
         if (request.getParentCommentId() != null) {
             parentComment = commentRepository.findById(request.getParentCommentId())
                     .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
+            
+            if (parentComment.getPost() == null || !parentComment.getPost().getId().equals(request.getPostId())) {
+                throw new IllegalArgumentException("Parent comment does not belong to the specified post");
+            }
         }
 
         Comment comment = new Comment();
