@@ -149,7 +149,8 @@ class UserFlowTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        PostDto[] allPosts = objectMapper.readValue(allPostsResult.getResponse().getContentAsString(), PostDto[].class);
+        JsonNode jsonNode = objectMapper.readTree(allPostsResult.getResponse().getContentAsString());
+        PostDto[] allPosts = objectMapper.treeToValue(jsonNode.get("content"), PostDto[].class);
         boolean postExists = Arrays.stream(allPosts).anyMatch(p -> p.getId().equals(postId));
         assertFalse(postExists, "Post should be deleted when user is deleted");
 

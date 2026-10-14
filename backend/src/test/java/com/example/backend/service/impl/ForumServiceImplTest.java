@@ -15,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,13 +57,15 @@ class ForumServiceImplTest {
         post.setTimestamp(LocalDateTime.now());
         post.setComments(new ArrayList<>());
 
-        when(postRepository.findAllByOrderByTimestampDesc()).thenReturn(List.of(post));
+        Page<Post> page = new PageImpl<>(List.of(post));
 
-        List<PostDto> result = forumService.getAllPosts();
+        when(postRepository.findAllByOrderByTimestampDesc(any(Pageable.class))).thenReturn(page);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(1L);
-        assertThat(result.get(0).getTitle()).isEqualTo("Test Post");
+        Page<PostDto> result = forumService.getAllPosts(0, 10);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Test Post");
     }
 
     @Test

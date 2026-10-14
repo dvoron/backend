@@ -12,6 +12,8 @@ import com.example.backend.repository.CommentRepository;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.ForumService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +39,9 @@ public class ForumServiceImpl implements ForumService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostDto> getAllPosts() {
-        List<Post> posts = postRepository.findAllByOrderByTimestampDesc();
-        return posts.stream().map(this::mapToDto).collect(Collectors.toList());
+    public Page<PostDto> getAllPosts(int page, int size) {
+        Page<Post> posts = postRepository.findAllByOrderByTimestampDesc(PageRequest.of(page, size));
+        return posts.map(this::mapToDto);
     }
 
     @Override

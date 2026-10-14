@@ -6,6 +6,7 @@ import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
 import com.example.backend.service.ForumService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,10 @@ public class ForumController {
     }
 
     @GetMapping("/posts")
-    public ResponseEntity<List<PostDto>> getAllPosts() {
-        List<PostDto> posts = forumService.getAllPosts();
+    public ResponseEntity<Page<PostDto>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<PostDto> posts = forumService.getAllPosts(page, size);
         return ResponseEntity.ok(posts);
     }
 
