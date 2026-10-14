@@ -6,7 +6,7 @@ import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.PostDto;
 import com.example.backend.model.dto.RegisterRequestDto;
-import com.example.backend.model.dto.UserDto;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,7 +35,7 @@ class UserFlowTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void userRegistrationLoginAndPostCreationFlow() throws Exception {
@@ -109,17 +110,8 @@ class UserFlowTest {
         String accessToken = authResponse.getAccessToken();
 
         // 3. Get User ID
-        MvcResult usersResult = mockMvc.perform(get("/api")
-                .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        UserDto[] users = objectMapper.readValue(usersResult.getResponse().getContentAsString(), UserDto[].class);
-        Long userId = Arrays.stream(users)
-                .filter(u -> "e2e_delete@example.com".equals(u.getEmail()))
-                .findFirst()
-                .orElseThrow()
-                .getId();
+        String payload = new String(Base64.getDecoder().decode(accessToken.split("\\.")[1]));
+        Long userId = Long.valueOf(objectMapper.readTree(payload).get("sub").asText());
 
         // 4. Create Post
         CreatePostRequest postRequest = new CreatePostRequest();
@@ -148,7 +140,7 @@ class UserFlowTest {
                 .andExpect(status().isOk());
 
         // 6. Delete User
-        mockMvc.perform(delete("/api/" + userId)
+        mockMvc.perform(delete("/api/users/" + userId)
                 .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk());
 
@@ -157,7 +149,8 @@ class UserFlowTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        PostDto[] allPosts = objectMapper.readValue(allPostsResult.getResponse().getContentAsString(), PostDto[].class);
+        JsonNode jsonNode = objectMapper.readTree(allPostsResult.getResponse().getContentAsString());
+        PostDto[] allPosts = objectMapper.treeToValue(jsonNode.get("content"), PostDto[].class);
         boolean postExists = Arrays.stream(allPosts).anyMatch(p -> p.getId().equals(postId));
         assertFalse(postExists, "Post should be deleted when user is deleted");
 

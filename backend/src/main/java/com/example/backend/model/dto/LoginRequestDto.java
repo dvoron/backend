@@ -1,7 +1,15 @@
 package com.example.backend.model.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class LoginRequestDto {
+    @NotBlank
+    @Size(max = 255)
     private String login;
+    
+    @NotBlank
+    @Size(max = 255)
     private String password;
 
     public String getLogin() {

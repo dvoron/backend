@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 
 
 import com.example.backend.exception.EmailAlreadyTakenException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
 import com.example.backend.exception.WrongLoginCredentialsException;
 import com.example.backend.model.dto.LoginRequestDto;
@@ -17,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +34,14 @@ public class UserServiceImpl {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionServiceImpl sessionService;
 
-    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder, SessionServiceImpl sessionService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sessionService = sessionService;
     }
 
     public List<User> getAllUsers() {
@@ -46,57 +51,84 @@ public class UserServiceImpl {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException("User not found"));
     }
 
     public User signIn(LoginRequestDto userLoginRequest) {
-        if (userRepository.existsByEmail(userLoginRequest.getLogin())) {
-            Optional<User> user = userRepository.findByEmail(userLoginRequest.getLogin());
-            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-                log.info("email and password Success for user: {}", userLoginRequest.getLogin());
-                return user.get();
-            } else {
-                log.warn("email and password Failure for user: {}", userLoginRequest.getLogin());
-                throw new WrongLoginCredentialsException();
+        String login = userLoginRequest.getLogin();
+        
+        if (login.contains("@")) {
+            Optional<User> userOpt = userRepository.findByEmail(login);
+            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
+                log.info("email and password Success for user: {}", login);
+                return userOpt.get();
             }
-        } else if (userRepository.existsByUsername(userLoginRequest.getLogin())) {
-            Optional<User> user = userRepository.findByUsername(userLoginRequest.getLogin());
-            if (passwordEncoder.matches(userLoginRequest.getPassword(), user.get().getPassword())) {
-                log.info("username and password Success for user: {}", userLoginRequest.getLogin());
-                return user.get();
-            } else {
-                log.warn("username and password Failure for user: {}", userLoginRequest.getLogin());
-                throw new WrongLoginCredentialsException();
+        } else {
+            Optional<User> userOpt = userRepository.findByUsername(login);
+            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
+                log.info("username and password Success for user: {}", login);
+                return userOpt.get();
             }
         }
-        log.warn("Login failed: User not found for login: {}", userLoginRequest.getLogin());
+        
+        log.warn("Login failed: User not found or wrong password for login: {}", login);
         throw new WrongLoginCredentialsException();
     }
 
     public User createUser(RegisterRequestDto request) {
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        if (request.getUsername() != null && request.getUsername().contains("@")) {
+            throw new IllegalArgumentException("Username cannot contain '@'");
+        }
+        
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailAlreadyTakenException(request.getEmail());
         } else if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new UsernameAlreadyTakenException(request.getUsername());
         }
         User user = new User();
-        user.setName(request.getUsername());
+        user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         user.setPassword(hashedPassword);
-        return userRepository.save(user);
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new EmailAlreadyTakenException(request.getEmail());
+            } else if (userRepository.existsByUsername(request.getUsername())) {
+                throw new UsernameAlreadyTakenException(request.getUsername());
+            }
+            throw e;
+        }
     }
 
     public User updateUser(Long id, com.example.backend.model.dto.UpdateUserRequestDto dto) {
 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException("User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
-            existingUser.setName(dto.getUsername());
+            if (dto.getUsername().contains("@")) {
+                throw new IllegalArgumentException("Username cannot contain '@'");
+            }
+            Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
+            if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
+                throw new UsernameAlreadyTakenException(dto.getUsername());
+            }
+            existingUser.setUsername(dto.getUsername());
         }
         if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            if (!dto.getEmail().contains("@")) {
+                throw new IllegalArgumentException("Invalid email format");
+            }
+            Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
+            if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
+                throw new EmailAlreadyTakenException(dto.getEmail());
+            }
             existingUser.setEmail(dto.getEmail());
         }
         if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
@@ -107,15 +139,28 @@ public class UserServiceImpl {
             existingUser.setPassword(hashedPassword);
         }
 
-        return userRepository.save(existingUser);
+        try {
+            return userRepository.save(existingUser);
+        } catch (DataIntegrityViolationException e) {
+            if (dto.getEmail() != null) {
+                Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
+                if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
+                    throw new EmailAlreadyTakenException(dto.getEmail());
+                }
+            }
+            if (dto.getUsername() != null) {
+                Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
+                if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
+                    throw new UsernameAlreadyTakenException(dto.getUsername());
+                }
+            }
+            throw e;
+        }
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-        List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(id);
-        commentRepository.deleteAll(comments);
-        
-        List<Post> posts = postRepository.findByAuthorIdOrderByTimestampDesc(id);
-        postRepository.deleteAll(posts);
+        sessionService.revokeAllUserSessions(id);
         
         userRepository.deleteById(id);
     }

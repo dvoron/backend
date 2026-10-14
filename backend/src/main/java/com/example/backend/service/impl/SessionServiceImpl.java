@@ -1,6 +1,7 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.exception.InvalidRefreshTokenException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.SessionCreateResult;
 import com.example.backend.model.entity.UserSession;
 import com.example.backend.repository.UserSessionRepository;
@@ -45,8 +46,13 @@ public class SessionServiceImpl {
     @Transactional
     public SessionCreateResult rotateSession(String rawRefreshToken) {
         UserSession session = sessionRepository
-                .findByRefreshTokenHashAndRevokedFalse(hash(rawRefreshToken))
+                .findByRefreshTokenHash(hash(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
+
+        if (session.isRevoked()) {
+            revokeAllUserSessions(session.getUserId());
+            throw new InvalidRefreshTokenException();
+        }
 
         if (session.getExpiresAt().isBefore(Instant.now())) {
             session.setRevoked(true);
@@ -61,10 +67,28 @@ public class SessionServiceImpl {
     }
 
     public void revokeSession(UUID sessionId) {
+        if (sessionId == null) {
+            return;
+        }
         UserSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
         session.setRevoked(true);
         sessionRepository.save(session);
+    }
+
+    public void revokeAllUserSessions(Long userId) {
+        java.util.List<UserSession> sessions = sessionRepository.findByUserId(userId);
+        for (UserSession session : sessions) {
+            session.setRevoked(true);
+        }
+        sessionRepository.saveAll(sessions);
+    }
+
+    public boolean isSessionValid(UUID sessionId) {
+        if (sessionId == null) return false;
+        return sessionRepository.findById(sessionId)
+                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()))
+                .orElse(false);
     }
 
     private String hash(String input) {

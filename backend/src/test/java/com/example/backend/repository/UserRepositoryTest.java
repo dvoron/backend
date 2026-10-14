@@ -21,7 +21,7 @@ class UserRepositoryTest {
     void findByEmailWithExistingEmailReturnsUser() {
         User user = new User();
         user.setEmail("test@example.com");
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("password");
         userRepository.save(user);
 
@@ -42,7 +42,7 @@ class UserRepositoryTest {
     void existsByEmailWithExistingEmailReturnsTrue() {
         User user = new User();
         user.setEmail("test@example.com");
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("password");
         userRepository.save(user);
 
@@ -62,21 +62,21 @@ class UserRepositoryTest {
     void findByUsernameWithExistingUsernameReturnsUser() {
         User user = new User();
         user.setEmail("test@example.com");
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("password");
         userRepository.save(user);
 
         Optional<User> found = userRepository.findByUsername("testuser");
 
         assertThat(found).isPresent();
-        assertThat(found.get().getName()).isEqualTo("testuser");
+        assertThat(found.get().getUsername()).isEqualTo("testuser");
     }
 
     @Test
     void existsByUsernameWithExistingUsernameReturnsTrue() {
         User user = new User();
         user.setEmail("test@example.com");
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("password");
         userRepository.save(user);
 

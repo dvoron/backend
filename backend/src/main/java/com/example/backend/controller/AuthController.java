@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -25,6 +27,9 @@ public class AuthController {
 
     private final AuthServiceImpl authService;
 
+    @Value("${jwt.refresh-token-expiry-days:30}")
+    private int refreshTokenExpiryDays;
+
     public AuthController(AuthServiceImpl authService) {
         this.authService = authService;
     }
@@ -33,8 +38,9 @@ public class AuthController {
         if (refreshToken != null) {
             ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                     .httpOnly(true)
-                    .path("/")
-                    .maxAge(7 * 24 * 60 * 60)
+                    .secure(true)
+                    .path("/api/auth")
+                    .maxAge(refreshTokenExpiryDays * 24L * 60L * 60L)
                     .sameSite("Lax")
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -44,7 +50,8 @@ public class AuthController {
     private void clearRefreshTokenCookie(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .path("/")
+                .secure(true)
+                .path("/api/auth")
                 .maxAge(0)
                 .sameSite("Lax")
                 .build();
@@ -53,7 +60,7 @@ public class AuthController {
 
     @Operation(summary = "Login user", description = "Authenticates user credentials and returns JWT access and refresh tokens")
     @PostMapping("/login")
-    public AuthResponseDto login(@RequestBody LoginRequestDto request, HttpServletResponse response) {
+    public AuthResponseDto login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.login(request);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
         return authResponse;
@@ -61,7 +68,7 @@ public class AuthController {
 
     @Operation(summary = "Register user", description = "Registers a new user and returns JWT access and refresh tokens")
     @PostMapping("/register")
-    public AuthResponseDto register(@RequestBody RegisterRequestDto request, HttpServletResponse response) {
+    public AuthResponseDto register(@Valid @RequestBody RegisterRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.register(request);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
         return authResponse;

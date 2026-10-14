@@ -4,6 +4,7 @@ import com.example.backend.model.entity.User;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
@@ -17,16 +18,18 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService();
+        MockEnvironment mockEnvironment = new MockEnvironment();
+        jwtService = new JwtService(mockEnvironment);
         ReflectionTestUtils.setField(jwtService, "secret", "test-secret-that-must-be-at-least-32-chars-long");
         ReflectionTestUtils.setField(jwtService, "accessTokenExpiryMinutes", 15);
+        jwtService.init();
     }
 
     @Test
     void generateTokenReturnsValidToken() {
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
         UUID sessionId = UUID.randomUUID();
 
         String token = jwtService.generateToken(user, sessionId);
@@ -39,7 +42,7 @@ class JwtServiceTest {
     void validateWithValidTokenReturnsClaims() {
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
         UUID sessionId = UUID.randomUUID();
 
         String token = jwtService.generateToken(user, sessionId);

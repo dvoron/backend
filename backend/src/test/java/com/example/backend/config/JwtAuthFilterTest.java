@@ -1,6 +1,7 @@
 package com.example.backend.config;
 
 import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.impl.SessionServiceImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.impl.DefaultClaims;
 import jakarta.servlet.FilterChain;
@@ -28,6 +29,9 @@ class JwtAuthFilterTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private SessionServiceImpl sessionService;
 
     @Mock
     private HttpServletRequest request;
@@ -60,6 +64,7 @@ class JwtAuthFilterTest {
         ));
         
         when(jwtService.validate(token)).thenReturn(claims);
+        when(sessionService.isSessionValid(sessionId)).thenReturn(true);
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 

@@ -1,6 +1,7 @@
 package com.example.backend.config;
 
 import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.impl.SessionServiceImpl;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final SessionServiceImpl sessionService;
 
-    public JwtAuthFilter(JwtService jwtService) {
+    public JwtAuthFilter(JwtService jwtService, SessionServiceImpl sessionService) {
         this.jwtService = jwtService;
+        this.sessionService = sessionService;
     }
 
     @Override
@@ -51,6 +54,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String sidStr = claims.get("sid", String.class);
             UUID sessionId = sidStr != null ? UUID.fromString(sidStr) : null;
+
+            if (sessionId == null || !sessionService.isSessionValid(sessionId)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             String role = claims.get("role", String.class);
             List<SimpleGrantedAuthority> authorities = (role != null)

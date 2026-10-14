@@ -92,7 +92,7 @@ class SessionServiceImplTest {
         oldSession.setExpiresAt(Instant.now().plus(Duration.ofDays(10)));
         oldSession.setRevoked(false);
 
-        when(sessionRepository.findByRefreshTokenHashAndRevokedFalse(tokenHash))
+        when(sessionRepository.findByRefreshTokenHash(tokenHash))
                 .thenReturn(Optional.of(oldSession));
         
         when(sessionRepository.save(any(UserSession.class))).thenAnswer(invocation -> {
@@ -129,7 +129,7 @@ class SessionServiceImplTest {
         oldSession.setExpiresAt(Instant.now().minus(Duration.ofDays(1))); // Expired
         oldSession.setRevoked(false);
 
-        when(sessionRepository.findByRefreshTokenHashAndRevokedFalse(tokenHash))
+        when(sessionRepository.findByRefreshTokenHash(tokenHash))
                 .thenReturn(Optional.of(oldSession));
 
         assertThrows(InvalidRefreshTokenException.class, () -> sessionService.rotateSession(rawToken));
@@ -140,16 +140,38 @@ class SessionServiceImplTest {
     }
 
     @Test
-    void testRotateSession_TokenNotFoundOrRevoked() {
+    void testRotateSession_TokenNotFound() {
         String rawToken = UUID.randomUUID().toString();
         String tokenHash = hash(rawToken);
 
-        when(sessionRepository.findByRefreshTokenHashAndRevokedFalse(tokenHash))
+        when(sessionRepository.findByRefreshTokenHash(tokenHash))
                 .thenReturn(Optional.empty());
 
         assertThrows(InvalidRefreshTokenException.class, () -> sessionService.rotateSession(rawToken));
 
         verify(sessionRepository, never()).save(any(UserSession.class));
+    }
+
+    @Test
+    void testRotateSession_TokenAlreadyRevoked() {
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = hash(rawToken);
+        Long userId = 1L;
+
+        UserSession oldSession = new UserSession();
+        ReflectionTestUtils.setField(oldSession, "id", UUID.randomUUID());
+        oldSession.setUserId(userId);
+        oldSession.setRefreshTokenHash(tokenHash);
+        oldSession.setExpiresAt(Instant.now().plus(Duration.ofDays(10)));
+        oldSession.setRevoked(true); // Already revoked
+
+        when(sessionRepository.findByRefreshTokenHash(tokenHash))
+                .thenReturn(Optional.of(oldSession));
+        when(sessionRepository.findByUserId(userId)).thenReturn(java.util.Collections.emptyList());
+
+        assertThrows(InvalidRefreshTokenException.class, () -> sessionService.rotateSession(rawToken));
+
+        verify(sessionRepository).findByUserId(userId);
     }
 
     @Test
@@ -177,6 +199,13 @@ class SessionServiceImplTest {
         assertEquals("Session not found", exception.getMessage());
 
         verify(sessionRepository, never()).save(any(UserSession.class));
+    }
+    
+    @Test
+    void testRevokeSession_NullId() {
+        sessionService.revokeSession(null);
+        verify(sessionRepository, never()).findById(any());
+        verify(sessionRepository, never()).save(any());
     }
     
     @Test

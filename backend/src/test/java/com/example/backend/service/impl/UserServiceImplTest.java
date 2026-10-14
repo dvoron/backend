@@ -40,6 +40,9 @@ class UserServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private SessionServiceImpl sessionService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -53,7 +56,6 @@ class UserServiceImplTest {
         user.setEmail("test@example.com");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
 
@@ -70,18 +72,16 @@ class UserServiceImplTest {
         request.setPassword("password");
 
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("testuser")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
 
         User result = userService.signIn(request);
 
         assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo("testuser");
+        assertThat(result.getUsername()).isEqualTo("testuser");
     }
 
     @Test
@@ -91,11 +91,9 @@ class UserServiceImplTest {
         request.setPassword("wrongpassword");
 
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("testuser")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", "hashedPassword")).thenReturn(false);
 
@@ -113,7 +111,6 @@ class UserServiceImplTest {
         user.setEmail("test@example.com");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", "hashedPassword")).thenReturn(false);
 
@@ -134,7 +131,7 @@ class UserServiceImplTest {
 
         User savedUser = new User();
         savedUser.setEmail("new@example.com");
-        savedUser.setName("newuser");
+        savedUser.setUsername("newuser");
         savedUser.setPassword("hashedPassword");
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -142,7 +139,7 @@ class UserServiceImplTest {
         User result = userService.createUser(request);
 
         assertThat(result.getEmail()).isEqualTo("new@example.com");
-        assertThat(result.getName()).isEqualTo("newuser");
+        assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getPassword()).isEqualTo("hashedPassword");
     }
 
@@ -171,6 +168,18 @@ class UserServiceImplTest {
 
         assertThatThrownBy(() -> userService.createUser(request))
                 .isInstanceOf(UsernameAlreadyTakenException.class);
+    }
+
+    @Test
+    void createUserWithInvalidEmailFormatThrowsException() {
+        RegisterRequestDto request = new RegisterRequestDto();
+        request.setEmail("invalidemail");
+        request.setUsername("newuser");
+        request.setPassword("password");
+
+        assertThatThrownBy(() -> userService.createUser(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid email format");
     }
 
     @Test
@@ -217,8 +226,7 @@ class UserServiceImplTest {
         request.setLogin("nonexisting");
         request.setPassword("password");
 
-        when(userRepository.existsByEmail("nonexisting")).thenReturn(false);
-        when(userRepository.existsByUsername("nonexisting")).thenReturn(false);
+        when(userRepository.findByUsername("nonexisting")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.signIn(request))
                 .isInstanceOf(WrongLoginCredentialsException.class);
@@ -228,7 +236,7 @@ class UserServiceImplTest {
     void updateUserWithValidDataUpdatesAndReturnsUser() {
         User existingUser = new User();
         existingUser.setId(1L);
-        existingUser.setName("olduser");
+        existingUser.setUsername("olduser");
         existingUser.setEmail("old@example.com");
         existingUser.setPassword("oldHashedPassword");
 
@@ -239,15 +247,75 @@ class UserServiceImplTest {
         dto.setNewPassword("newpassword");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
         when(passwordEncoder.encode("newpassword")).thenReturn("newHashedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
 
         User result = userService.updateUser(1L, dto);
 
-        assertThat(result.getName()).isEqualTo("newuser");
+        assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getEmail()).isEqualTo("new@example.com");
         assertThat(result.getPassword()).isEqualTo("newHashedPassword");
+    }
+
+    @Test
+    void updateUserWithExistingEmailThrowsEmailAlreadyTakenException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setUsername("olduser");
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setEmail("taken@example.com");
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setEmail("taken@example.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(EmailAlreadyTakenException.class);
+    }
+
+    @Test
+    void updateUserWithExistingUsernameThrowsUsernameAlreadyTakenException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setUsername("olduser");
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setUsername("takenuser");
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setUsername("takenuser");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(UsernameAlreadyTakenException.class);
+    }
+
+    @Test
+    void updateUserWithInvalidEmailFormatThrowsException() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setEmail("invalidemail");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid email format");
     }
 
     @Test
@@ -281,13 +349,11 @@ class UserServiceImplTest {
 
     @Test
     void deleteUserCallsRepositoryDeleteById() {
-        when(commentRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
-        when(postRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
+        doNothing().when(sessionService).revokeAllUserSessions(1L);
 
         userService.deleteUser(1L);
 
-        verify(commentRepository, times(1)).deleteAll(List.of());
-        verify(postRepository, times(1)).deleteAll(List.of());
+        verify(sessionService, times(1)).revokeAllUserSessions(1L);
         verify(userRepository, times(1)).deleteById(1L);
     }
 }

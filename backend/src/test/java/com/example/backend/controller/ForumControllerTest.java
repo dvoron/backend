@@ -4,13 +4,16 @@ import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
-import com.example.backend.service.ForumService;
+import com.example.backend.service.impl.ForumServiceImpl;
 import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.impl.SessionServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -41,12 +44,15 @@ class ForumControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ForumService forumService;
+    private ForumServiceImpl forumService;
 
     @MockitoBean
     private JwtService jwtService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @MockitoBean
+    private SessionServiceImpl sessionService;
+
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void getAllPostsReturnsOkAndList() throws Exception {
@@ -55,14 +61,16 @@ class ForumControllerTest {
         postDto.setTitle("Test Post");
         postDto.setContent("Test Content");
 
-        when(forumService.getAllPosts()).thenReturn(List.of(postDto));
+        Page<PostDto> page = new PageImpl<>(List.of(postDto));
+
+        when(forumService.getAllPosts(0, 10)).thenReturn(page);
 
         mockMvc.perform(get("/api/forum/posts")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Test Post"))
-                .andExpect(jsonPath("$[0].content").value("Test Content"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Test Post"))
+                .andExpect(jsonPath("$.content[0].content").value("Test Content"));
     }
 
     @Test
