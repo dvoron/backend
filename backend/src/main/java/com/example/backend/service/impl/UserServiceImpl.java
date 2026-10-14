@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
@@ -157,14 +158,9 @@ public class UserServiceImpl {
         }
     }
 
+    @Transactional
     public void deleteUser(Long id) {
         sessionService.revokeAllUserSessions(id);
-
-        List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(id);
-        commentRepository.deleteAll(comments);
-        
-        List<Post> posts = postRepository.findByAuthorIdOrderByTimestampDesc(id);
-        postRepository.deleteAll(posts);
         
         userRepository.deleteById(id);
     }

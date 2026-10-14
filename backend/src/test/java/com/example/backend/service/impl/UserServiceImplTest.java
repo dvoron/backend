@@ -349,15 +349,11 @@ class UserServiceImplTest {
 
     @Test
     void deleteUserCallsRepositoryDeleteById() {
-        when(commentRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
-        when(postRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of());
         doNothing().when(sessionService).revokeAllUserSessions(1L);
 
         userService.deleteUser(1L);
 
         verify(sessionService, times(1)).revokeAllUserSessions(1L);
-        verify(commentRepository, times(1)).deleteAll(List.of());
-        verify(postRepository, times(1)).deleteAll(List.of());
         verify(userRepository, times(1)).deleteById(1L);
     }
 }
