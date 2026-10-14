@@ -3,6 +3,7 @@ package com.example.backend.model.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -23,6 +24,9 @@ public class UserSession {
     private Instant expiresAt;
 
     private boolean revoked;
+
+    @Version
+    private Long version;
 
     public UUID getId() {
         return id;
@@ -66,5 +70,13 @@ public class UserSession {
 
     public void setRevoked(boolean revoked) {
         this.revoked = revoked;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

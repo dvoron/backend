@@ -46,8 +46,13 @@ public class SessionServiceImpl {
     @Transactional
     public SessionCreateResult rotateSession(String rawRefreshToken) {
         UserSession session = sessionRepository
-                .findByRefreshTokenHashAndRevokedFalse(hash(rawRefreshToken))
+                .findByRefreshTokenHash(hash(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
+
+        if (session.isRevoked()) {
+            revokeAllUserSessions(session.getUserId());
+            throw new InvalidRefreshTokenException();
+        }
 
         if (session.getExpiresAt().isBefore(Instant.now())) {
             session.setRevoked(true);
@@ -62,6 +67,9 @@ public class SessionServiceImpl {
     }
 
     public void revokeSession(UUID sessionId) {
+        if (sessionId == null) {
+            return;
+        }
         UserSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
         session.setRevoked(true);
