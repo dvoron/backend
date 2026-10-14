@@ -4,7 +4,7 @@ import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
-import com.example.backend.service.ForumService;
+import com.example.backend.service.impl.ForumServiceImpl;
 import com.example.backend.service.impl.JwtService;
 import com.example.backend.service.impl.SessionServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +44,7 @@ class ForumControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ForumService forumService;
+    private ForumServiceImpl forumService;
 
     @MockitoBean
     private JwtService jwtService;
@@ -52,7 +52,7 @@ class ForumControllerTest {
     @MockitoBean
     private SessionServiceImpl sessionService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void getAllPostsReturnsOkAndList() throws Exception {

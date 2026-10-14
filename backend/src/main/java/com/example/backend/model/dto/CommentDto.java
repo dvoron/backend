@@ -1,12 +1,13 @@
 package com.example.backend.model.dto;
 
+import java.time.Instant;
 import java.util.List;
 
 public class CommentDto {
     private Long id;
     private String author;
     private String content;
-    private String timestamp;
+    private Instant timestamp;
     private List<CommentDto> replies;
     private String postTitle;
     private Long postId;
@@ -37,11 +38,11 @@ public class CommentDto {
         this.content = content;
     }
 
-    public String getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
 

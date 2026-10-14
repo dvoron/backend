@@ -47,7 +47,7 @@ public class JwtService {
     public String generateToken(User user, UUID sessionId) {
         return Jwts.builder()
                 .subject(user.getId().toString())
-                .claim("username", user.getName())
+                .claim("username", user.getUsername())
                 .claim("sid", sessionId.toString())
                 .claim("role", "USER")
                 .issuedAt(new Date())

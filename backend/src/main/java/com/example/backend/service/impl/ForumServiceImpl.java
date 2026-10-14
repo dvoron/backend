@@ -11,25 +11,21 @@ import com.example.backend.model.entity.User;
 import com.example.backend.repository.CommentRepository;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.repository.UserRepository;
-import com.example.backend.service.ForumService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ForumServiceImpl implements ForumService {
+public class ForumServiceImpl {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy, h:mm:ss a");
 
     public ForumServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
         this.postRepository = postRepository;
@@ -37,14 +33,12 @@ public class ForumServiceImpl implements ForumService {
         this.userRepository = userRepository;
     }
 
-    @Override
     @Transactional(readOnly = true)
     public Page<PostDto> getAllPosts(int page, int size) {
         Page<Post> posts = postRepository.findAllByOrderByTimestampDesc(PageRequest.of(page, size));
         return posts.map(this::mapToDto);
     }
 
-    @Override
     @Transactional
     public PostDto createPost(CreatePostRequest request, Long userId) {
         User user = userRepository.findById(userId)
@@ -54,13 +48,12 @@ public class ForumServiceImpl implements ForumService {
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
         post.setAuthor(user);
-        post.setTimestamp(LocalDateTime.now());
+        post.setTimestamp(Instant.now());
 
         Post saved = postRepository.save(post);
         return mapToDto(saved);
     }
 
-    @Override
     @Transactional
     public CommentDto createComment(CreateCommentRequest request, Long userId) {
         User user = userRepository.findById(userId)
@@ -84,20 +77,18 @@ public class ForumServiceImpl implements ForumService {
         comment.setAuthor(user);
         comment.setPost(post);
         comment.setParentComment(parentComment);
-        comment.setTimestamp(LocalDateTime.now());
+        comment.setTimestamp(Instant.now());
 
         Comment saved = commentRepository.save(comment);
         return mapToDto(saved);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<PostDto> getPostsByUserId(Long userId) {
         List<Post> posts = postRepository.findByAuthorIdOrderByTimestampDesc(userId);
         return posts.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getCommentsByUserId(Long userId) {
         List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(userId);
@@ -109,10 +100,8 @@ public class ForumServiceImpl implements ForumService {
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
-        dto.setAuthor(post.getAuthor().getName());
-        dto.setTimestamp(post.getTimestamp().format(FORMATTER));
-        dto.setShowComments(false);
-        dto.setNewCommentContent("");
+        dto.setAuthor(post.getAuthor().getUsername());
+        dto.setTimestamp(post.getTimestamp());
 
         List<CommentDto> comments = post.getComments().stream()
                 .filter(c -> c.getParentComment() == null) // only top level
@@ -127,8 +116,8 @@ public class ForumServiceImpl implements ForumService {
         CommentDto dto = new CommentDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
-        dto.setAuthor(comment.getAuthor().getName());
-        dto.setTimestamp(comment.getTimestamp().format(FORMATTER));
+        dto.setAuthor(comment.getAuthor().getUsername());
+        dto.setTimestamp(comment.getTimestamp());
 
         if (comment.getPost() != null) {
             dto.setPostTitle(comment.getPost().getTitle());

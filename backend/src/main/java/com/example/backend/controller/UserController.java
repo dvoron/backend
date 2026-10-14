@@ -1,12 +1,16 @@
 package com.example.backend.controller;
 
 import com.example.backend.model.dto.UserDto;
+import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.service.impl.UserServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @Tag(name = "User Management", description = "Endpoints for managing users")
 @RestController
@@ -21,38 +25,39 @@ public class UserController {
 
     @Operation(summary = "Get user by ID", description = "Retrieves user details by user ID")
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long id, org.springframework.security.core.Authentication authentication) {
-        Long authenticatedUserId = (Long) authentication.getPrincipal();
-        if (!id.equals(authenticatedUserId)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
-        }
+    public UserDto getUser(@PathVariable Long id, Authentication authentication) {
+        verifyOwnership(id, authentication);
         User user = userService.getUserById(id);
-        return new UserDto(user.getId(), user.getName(), user.getEmail());
+        return mapToDto(user);
     }
 
     @Operation(summary = "Update user", description = "Updates existing user details by user ID")
     @PutMapping("/{id}")
     public UserDto updateUser(
             @PathVariable Long id,
-            @Valid @RequestBody com.example.backend.model.dto.UpdateUserRequestDto userDto,
-            org.springframework.security.core.Authentication authentication) {
+            @Valid @RequestBody UpdateUserRequestDto userDto,
+            Authentication authentication) {
 
-        Long authenticatedUserId = (Long) authentication.getPrincipal();
-        if (!id.equals(authenticatedUserId)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
-        }
-
+        verifyOwnership(id, authentication);
         User user = userService.updateUser(id, userDto);
-        return new UserDto(user.getId(), user.getName(), user.getEmail());
+        return mapToDto(user);
     }
 
     @Operation(summary = "Delete user", description = "Deletes a user by user ID")
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id, org.springframework.security.core.Authentication authentication) {
+    public void deleteUser(@PathVariable Long id, Authentication authentication) {
+        verifyOwnership(id, authentication);
+        userService.deleteUser(id);
+    }
+
+    private void verifyOwnership(Long id, Authentication authentication) {
         Long authenticatedUserId = (Long) authentication.getPrincipal();
         if (!id.equals(authenticatedUserId)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
-        userService.deleteUser(id);
+    }
+
+    private UserDto mapToDto(User user) {
+        return new UserDto(user.getId(), user.getUsername(), user.getEmail());
     }
 }

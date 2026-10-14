@@ -48,7 +48,7 @@ class AuthControllerTest {
     @MockitoBean
     private com.example.backend.service.impl.SessionServiceImpl sessionService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void loginReturnsOkAndTokens() throws Exception {

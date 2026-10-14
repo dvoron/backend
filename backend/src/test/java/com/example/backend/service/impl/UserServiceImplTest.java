@@ -72,7 +72,7 @@ class UserServiceImplTest {
         request.setPassword("password");
 
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("hashedPassword");
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
@@ -81,7 +81,7 @@ class UserServiceImplTest {
         User result = userService.signIn(request);
 
         assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo("testuser");
+        assertThat(result.getUsername()).isEqualTo("testuser");
     }
 
     @Test
@@ -91,7 +91,7 @@ class UserServiceImplTest {
         request.setPassword("wrongpassword");
 
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setPassword("hashedPassword");
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
@@ -131,7 +131,7 @@ class UserServiceImplTest {
 
         User savedUser = new User();
         savedUser.setEmail("new@example.com");
-        savedUser.setName("newuser");
+        savedUser.setUsername("newuser");
         savedUser.setPassword("hashedPassword");
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -139,7 +139,7 @@ class UserServiceImplTest {
         User result = userService.createUser(request);
 
         assertThat(result.getEmail()).isEqualTo("new@example.com");
-        assertThat(result.getName()).isEqualTo("newuser");
+        assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getPassword()).isEqualTo("hashedPassword");
     }
 
@@ -236,7 +236,7 @@ class UserServiceImplTest {
     void updateUserWithValidDataUpdatesAndReturnsUser() {
         User existingUser = new User();
         existingUser.setId(1L);
-        existingUser.setName("olduser");
+        existingUser.setUsername("olduser");
         existingUser.setEmail("old@example.com");
         existingUser.setPassword("oldHashedPassword");
 
@@ -255,7 +255,7 @@ class UserServiceImplTest {
 
         User result = userService.updateUser(1L, dto);
 
-        assertThat(result.getName()).isEqualTo("newuser");
+        assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getEmail()).isEqualTo("new@example.com");
         assertThat(result.getPassword()).isEqualTo("newHashedPassword");
     }
@@ -264,7 +264,7 @@ class UserServiceImplTest {
     void updateUserWithExistingEmailThrowsEmailAlreadyTakenException() {
         User existingUser = new User();
         existingUser.setId(1L);
-        existingUser.setName("olduser");
+        existingUser.setUsername("olduser");
         existingUser.setEmail("old@example.com");
 
         UpdateUserRequestDto dto = new UpdateUserRequestDto();
@@ -285,7 +285,7 @@ class UserServiceImplTest {
     void updateUserWithExistingUsernameThrowsUsernameAlreadyTakenException() {
         User existingUser = new User();
         existingUser.setId(1L);
-        existingUser.setName("olduser");
+        existingUser.setUsername("olduser");
         existingUser.setEmail("old@example.com");
 
         UpdateUserRequestDto dto = new UpdateUserRequestDto();
@@ -293,7 +293,7 @@ class UserServiceImplTest {
 
         User otherUser = new User();
         otherUser.setId(2L);
-        otherUser.setName("takenuser");
+        otherUser.setUsername("takenuser");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
         when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));

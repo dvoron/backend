@@ -35,7 +35,7 @@ class UserFlowTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void userRegistrationLoginAndPostCreationFlow() throws Exception {

@@ -19,7 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
@@ -47,14 +47,14 @@ class ForumServiceImplTest {
     @Test
     void getAllPostsReturnsListOfPostDtos() {
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post post = new Post();
         post.setId(1L);
         post.setTitle("Test Post");
         post.setContent("Test Content");
         post.setAuthor(user);
-        post.setTimestamp(LocalDateTime.now());
+        post.setTimestamp(Instant.now());
         post.setComments(new ArrayList<>());
 
         Page<Post> page = new PageImpl<>(List.of(post));
@@ -76,14 +76,14 @@ class ForumServiceImplTest {
 
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post savedPost = new Post();
         savedPost.setId(1L);
         savedPost.setTitle("New Post");
         savedPost.setContent("New Content");
         savedPost.setAuthor(user);
-        savedPost.setTimestamp(LocalDateTime.now());
+        savedPost.setTimestamp(Instant.now());
         savedPost.setComments(new ArrayList<>());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -116,7 +116,7 @@ class ForumServiceImplTest {
 
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post post = new Post();
         post.setId(1L);
@@ -127,7 +127,7 @@ class ForumServiceImplTest {
         savedComment.setContent("New Comment");
         savedComment.setAuthor(user);
         savedComment.setPost(post);
-        savedComment.setTimestamp(LocalDateTime.now());
+        savedComment.setTimestamp(Instant.now());
         savedComment.setReplies(new ArrayList<>());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -150,7 +150,7 @@ class ForumServiceImplTest {
 
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post post = new Post();
         post.setId(1L);
@@ -166,7 +166,7 @@ class ForumServiceImplTest {
         savedComment.setAuthor(user);
         savedComment.setPost(post);
         savedComment.setParentComment(parentComment);
-        savedComment.setTimestamp(LocalDateTime.now());
+        savedComment.setTimestamp(Instant.now());
         savedComment.setReplies(new ArrayList<>());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -260,14 +260,14 @@ class ForumServiceImplTest {
     @Test
     void getPostsByUserIdReturnsListOfPostDtos() {
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post post = new Post();
         post.setId(1L);
         post.setTitle("User Post");
         post.setContent("User Content");
         post.setAuthor(user);
-        post.setTimestamp(LocalDateTime.now());
+        post.setTimestamp(Instant.now());
         post.setComments(new ArrayList<>());
 
         when(postRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of(post));
@@ -282,7 +282,7 @@ class ForumServiceImplTest {
     @Test
     void getCommentsByUserIdReturnsListOfCommentDtos() {
         User user = new User();
-        user.setName("testuser");
+        user.setUsername("testuser");
 
         Post post = new Post();
         post.setId(1L);
@@ -293,7 +293,7 @@ class ForumServiceImplTest {
         comment.setContent("User Comment");
         comment.setAuthor(user);
         comment.setPost(post);
-        comment.setTimestamp(LocalDateTime.now());
+        comment.setTimestamp(Instant.now());
         comment.setReplies(new ArrayList<>());
 
         when(commentRepository.findByAuthorIdOrderByTimestampDesc(1L)).thenReturn(List.of(comment));

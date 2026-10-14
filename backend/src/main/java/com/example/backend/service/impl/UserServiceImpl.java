@@ -89,7 +89,7 @@ public class UserServiceImpl {
             throw new UsernameAlreadyTakenException(request.getUsername());
         }
         User user = new User();
-        user.setName(request.getUsername());
+        user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         user.setPassword(hashedPassword);
@@ -119,7 +119,7 @@ public class UserServiceImpl {
             if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
                 throw new UsernameAlreadyTakenException(dto.getUsername());
             }
-            existingUser.setName(dto.getUsername());
+            existingUser.setUsername(dto.getUsername());
         }
         if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
             if (!dto.getEmail().contains("@")) {

@@ -29,7 +29,7 @@ class JwtServiceTest {
     void generateTokenReturnsValidToken() {
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
         UUID sessionId = UUID.randomUUID();
 
         String token = jwtService.generateToken(user, sessionId);
@@ -42,7 +42,7 @@ class JwtServiceTest {
     void validateWithValidTokenReturnsClaims() {
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
         UUID sessionId = UUID.randomUUID();
 
         String token = jwtService.generateToken(user, sessionId);

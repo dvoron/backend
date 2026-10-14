@@ -4,7 +4,7 @@ import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
-import com.example.backend.service.ForumService;
+import com.example.backend.service.impl.ForumServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,9 @@ import java.util.List;
 @RequestMapping("/api/forum")
 public class ForumController {
 
-    private final ForumService forumService;
+    private final ForumServiceImpl forumService;
 
-    public ForumController(ForumService forumService) {
+    public ForumController(ForumServiceImpl forumService) {
         this.forumService = forumService;
     }
 

@@ -45,13 +45,13 @@ class UserControllerTest {
     @MockitoBean
     private SessionServiceImpl sessionService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void getUserWithMatchingIdReturnsOkAndUser() throws Exception {
         User user = new User();
         user.setId(1L);
-        user.setName("testuser");
+        user.setUsername("testuser");
         user.setEmail("test@example.com");
 
         when(userService.getUserById(1L)).thenReturn(user);
@@ -81,7 +81,7 @@ class UserControllerTest {
 
         User updatedUser = new User();
         updatedUser.setId(1L);
-        updatedUser.setName("updateduser");
+        updatedUser.setUsername("updateduser");
         updatedUser.setEmail("updated@example.com");
 
         when(userService.updateUser(eq(1L), any(UpdateUserRequestDto.class))).thenReturn(updatedUser);

@@ -1,7 +1,7 @@
 package com.example.backend.model.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class Post {
     @Column(length = 2000)
     private String content;
 
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -53,11 +53,11 @@ public class Post {
         this.content = content;
     }
 
-    public LocalDateTime getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
 

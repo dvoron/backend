@@ -1,5 +1,6 @@
 package com.example.backend.model.dto;
 
+import java.time.Instant;
 import java.util.List;
 
 public class PostDto {
@@ -7,11 +8,8 @@ public class PostDto {
     private String author;
     private String title;
     private String content;
-    private String timestamp;
+    private Instant timestamp;
     private List<CommentDto> comments;
-
-    private boolean showComments = false;
-    private String newCommentContent = "";
 
     public PostDto() {}
 
@@ -47,11 +45,11 @@ public class PostDto {
         this.content = content;
     }
 
-    public String getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -61,21 +59,5 @@ public class PostDto {
 
     public void setComments(List<CommentDto> comments) {
         this.comments = comments;
-    }
-
-    public boolean isShowComments() {
-        return showComments;
-    }
-
-    public void setShowComments(boolean showComments) {
-        this.showComments = showComments;
-    }
-
-    public String getNewCommentContent() {
-        return newCommentContent;
-    }
-
-    public void setNewCommentContent(String newCommentContent) {
-        this.newCommentContent = newCommentContent;
     }
 }
