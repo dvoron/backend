@@ -45,9 +45,9 @@ public class UserController {
 
     @Operation(summary = "Delete user", description = "Deletes a user by user ID")
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id, Authentication authentication) {
+    public void deleteUser(@PathVariable Long id, @Valid @RequestBody com.example.backend.model.dto.DeleteUserRequestDto request, Authentication authentication) {
         verifyOwnership(id, authentication);
-        userService.deleteUser(id);
+        userService.deleteUser(id, request.getPassword());
     }
 
     private void verifyOwnership(Long id, Authentication authentication) {

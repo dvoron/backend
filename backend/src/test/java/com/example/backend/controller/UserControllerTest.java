@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.config.JwtAuthFilter;
 import com.example.backend.config.SecurityConfig;
+import com.example.backend.model.dto.DeleteUserRequestDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.service.impl.JwtService;
@@ -110,17 +111,27 @@ class UserControllerTest {
 
     @Test
     void deleteUserWithMatchingIdReturnsOk() throws Exception {
+        DeleteUserRequestDto request = new DeleteUserRequestDto();
+        request.setPassword("password");
+
         mockMvc.perform(delete("/api/users/1")
-                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))))))
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(userService).deleteUser(1L);
+        verify(userService).deleteUser(1L, "password");
     }
 
     @Test
     void deleteUserWithNonMatchingIdReturnsForbidden() throws Exception {
+        DeleteUserRequestDto request = new DeleteUserRequestDto();
+        request.setPassword("password");
+
         mockMvc.perform(delete("/api/users/2")
-                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))))))
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
 }

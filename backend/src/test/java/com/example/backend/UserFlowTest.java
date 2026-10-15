@@ -1,11 +1,6 @@
 package com.example.backend;
 
-import com.example.backend.model.dto.AuthResponseDto;
-import com.example.backend.model.dto.CreateCommentRequest;
-import com.example.backend.model.dto.CreatePostRequest;
-import com.example.backend.model.dto.LoginRequestDto;
-import com.example.backend.model.dto.PostDto;
-import com.example.backend.model.dto.RegisterRequestDto;
+import com.example.backend.model.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -140,8 +135,13 @@ class UserFlowTest {
                 .andExpect(status().isOk());
 
         // 6. Delete User
+        DeleteUserRequestDto deleteRequest = new DeleteUserRequestDto();
+        deleteRequest.setPassword("password");
+
         mockMvc.perform(delete("/api/users/" + userId)
-                .header("Authorization", "Bearer " + accessToken))
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(deleteRequest)))
                 .andExpect(status().isOk());
 
         // 7. Verify posts and comments are gone
