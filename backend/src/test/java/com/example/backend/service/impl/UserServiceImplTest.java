@@ -349,9 +349,15 @@ class UserServiceImplTest {
 
     @Test
     void deleteUserCallsRepositoryDeleteById() {
+        User user = new User();
+        user.setId(1L);
+        user.setPassword("hashedPassword");
+        
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
         doNothing().when(sessionService).revokeAllUserSessions(1L);
 
-        userService.deleteUser(1L);
+        userService.deleteUser(1L, "password");
 
         verify(sessionService, times(1)).revokeAllUserSessions(1L);
         verify(userRepository, times(1)).deleteById(1L);

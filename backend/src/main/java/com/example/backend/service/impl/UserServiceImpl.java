@@ -159,7 +159,14 @@ public class UserServiceImpl {
     }
 
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, String password) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+        
         sessionService.revokeAllUserSessions(id);
         
         userRepository.deleteById(id);
