@@ -100,7 +100,13 @@ public class ForumServiceImpl {
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
-        dto.setAuthor(post.getAuthor().getUsername());
+        
+        if (post.getAuthor() != null) {
+            dto.setAuthor(post.getAuthor().getUsername());
+        } else {
+            dto.setAuthor("[deleted user]");
+        }
+        
         dto.setTimestamp(post.getTimestamp());
 
         List<CommentDto> comments = post.getComments().stream()
@@ -116,7 +122,13 @@ public class ForumServiceImpl {
         CommentDto dto = new CommentDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
-        dto.setAuthor(comment.getAuthor().getUsername());
+        
+        if (comment.getAuthor() != null) {
+            dto.setAuthor(comment.getAuthor().getUsername());
+        } else {
+            dto.setAuthor("[deleted user]");
+        }
+        
         dto.setTimestamp(comment.getTimestamp());
 
         if (comment.getPost() != null) {

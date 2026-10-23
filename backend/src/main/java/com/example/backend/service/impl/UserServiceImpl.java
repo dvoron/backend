@@ -182,6 +182,19 @@ public class UserServiceImpl {
         
         sessionService.revokeAllUserSessions(id);
         
+        // Anonymise user's posts and comments instead of deleting them
+        List<Post> posts = postRepository.findByAuthorId(id);
+        for (Post post : posts) {
+            post.setAuthor(null);
+        }
+        postRepository.saveAll(posts);
+
+        List<Comment> comments = commentRepository.findByAuthorId(id);
+        for (Comment comment : comments) {
+            comment.setAuthor(null);
+        }
+        commentRepository.saveAll(comments);
+        
         userRepository.deleteById(id);
     }
 

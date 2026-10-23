@@ -145,20 +145,24 @@ class UserFlowTest {
                 .content(objectMapper.writeValueAsString(deleteRequest)))
                 .andExpect(status().isOk());
 
-        // 7. Verify posts and comments are gone
+        // 7. Verify posts and comments are still there but anonymised
         MvcResult allPostsResult = mockMvc.perform(get("/api/forum/posts"))
                 .andExpect(status().isOk())
                 .andReturn();
 
         JsonNode jsonNode = objectMapper.readTree(allPostsResult.getResponse().getContentAsString());
         PostDto[] allPosts = objectMapper.treeToValue(jsonNode.get("content"), PostDto[].class);
-        boolean postExists = Arrays.stream(allPosts).anyMatch(p -> p.getId().equals(postId));
-        assertFalse(postExists, "Post should be deleted when user is deleted");
+        
+        boolean postAnonymised = Arrays.stream(allPosts)
+                .filter(p -> p.getId().equals(postId))
+                .anyMatch(p -> "[deleted user]".equals(p.getAuthor()));
+        assert(postAnonymised) : "Post should be anonymised when user is deleted";
 
-        boolean commentExists = Arrays.stream(allPosts)
+        boolean commentAnonymised = Arrays.stream(allPosts)
+                .filter(p -> p.getId().equals(postId))
                 .flatMap(p -> p.getComments() != null ? p.getComments().stream() : java.util.stream.Stream.empty())
-                .anyMatch(c -> "e2edeleteuser".equals(c.getAuthor()));
-        assertFalse(commentExists, "Comments should be deleted when user is deleted");
+                .anyMatch(c -> "[deleted user]".equals(c.getAuthor()));
+        assert(commentAnonymised) : "Comments should be anonymised when user is deleted";
     }
 
     @Test
