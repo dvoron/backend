@@ -64,7 +64,7 @@ class JwtAuthFilterTest {
         ));
         
         when(jwtService.validate(token)).thenReturn(claims);
-        when(sessionService.isSessionValid(sessionId)).thenReturn(true);
+        when(sessionService.isSessionValid(sessionId, 1L)).thenReturn(true);
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 

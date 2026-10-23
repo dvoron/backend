@@ -84,10 +84,10 @@ public class SessionServiceImpl {
         sessionRepository.saveAll(sessions);
     }
 
-    public boolean isSessionValid(UUID sessionId) {
-        if (sessionId == null) return false;
+    public boolean isSessionValid(UUID sessionId, Long userId) {
+        if (sessionId == null || userId == null) return false;
         return sessionRepository.findById(sessionId)
-                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()))
+                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()) && session.getUserId().equals(userId))
                 .orElse(false);
     }
 

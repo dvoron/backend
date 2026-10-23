@@ -36,8 +36,9 @@ public class JwtService {
     @PostConstruct
     public void init() {
         if ("change-me-in-production-must-be-at-least-32-chars".equals(secret)) {
-            boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
-            if (isProd) {
+            boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
+            boolean isTest = Arrays.asList(environment.getActiveProfiles()).contains("test");
+            if (!isDev && !isTest) {
                 throw new IllegalStateException("JWT secret must be configured in production!");
             }
         }

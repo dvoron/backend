@@ -55,7 +55,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String sidStr = claims.get("sid", String.class);
             UUID sessionId = sidStr != null ? UUID.fromString(sidStr) : null;
 
-            if (sessionId == null || !sessionService.isSessionValid(sessionId)) {
+            if (sessionId == null || !sessionService.isSessionValid(sessionId, userId)) {
                 filterChain.doFilter(request, response);
                 return;
             }
