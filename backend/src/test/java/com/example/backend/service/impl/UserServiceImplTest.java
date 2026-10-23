@@ -249,7 +249,9 @@ class UserServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
         when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        // For the email change check:
         when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
+        // And the newPassword encode check (from previous logic):
         when(passwordEncoder.encode("newpassword")).thenReturn("newHashedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
 
@@ -266,15 +268,18 @@ class UserServiceImplTest {
         existingUser.setId(1L);
         existingUser.setUsername("olduser");
         existingUser.setEmail("old@example.com");
+        existingUser.setPassword("oldHashedPassword");
 
         UpdateUserRequestDto dto = new UpdateUserRequestDto();
         dto.setEmail("taken@example.com");
+        dto.setOldPassword("oldpassword");
 
         User otherUser = new User();
         otherUser.setId(2L);
         otherUser.setEmail("taken@example.com");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
         when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
 
         assertThatThrownBy(() -> userService.updateUser(1L, dto))
@@ -307,11 +312,14 @@ class UserServiceImplTest {
         User existingUser = new User();
         existingUser.setId(1L);
         existingUser.setEmail("old@example.com");
+        existingUser.setPassword("oldHashedPassword");
 
         UpdateUserRequestDto dto = new UpdateUserRequestDto();
         dto.setEmail("invalidemail");
+        dto.setOldPassword("oldpassword");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.updateUser(1L, dto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -345,6 +353,42 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateUser(99L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("User not found");
+    }
+
+    @Test
+    void updateUserRequiresPasswordToChangeEmail() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setEmail("old@example.com");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setEmail("new@example.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Current password is required to change email");
+    }
+
+    @Test
+    void updateUserRevokesSessionsOnPasswordChange() {
+        User existingUser = new User();
+        existingUser.setId(1L);
+        existingUser.setPassword("oldHashedPassword");
+
+        UpdateUserRequestDto dto = new UpdateUserRequestDto();
+        dto.setOldPassword("oldpassword");
+        dto.setNewPassword("newpassword");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
+        when(passwordEncoder.encode("newpassword")).thenReturn("newHashedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        userService.updateUser(1L, dto);
+
+        verify(sessionService).revokeAllUserSessions(1L);
     }
 
     @Test

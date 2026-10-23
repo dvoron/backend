@@ -111,6 +111,15 @@ public class UserServiceImpl {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
 
+        boolean isEmailChanged = dto.getEmail() != null && !dto.getEmail().isEmpty() && !dto.getEmail().equals(existingUser.getEmail());
+        boolean isPasswordChanged = dto.getNewPassword() != null && !dto.getNewPassword().isEmpty();
+        
+        if (isEmailChanged) {
+            if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
+                throw new IllegalArgumentException("Current password is required to change email");
+            }
+        }
+
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
             if (dto.getUsername().contains("@")) {
                 throw new IllegalArgumentException("Username cannot contain '@'");
@@ -121,7 +130,7 @@ public class UserServiceImpl {
             }
             existingUser.setUsername(dto.getUsername());
         }
-        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+        if (isEmailChanged) {
             if (!dto.getEmail().contains("@")) {
                 throw new IllegalArgumentException("Invalid email format");
             }
@@ -131,7 +140,7 @@ public class UserServiceImpl {
             }
             existingUser.setEmail(dto.getEmail());
         }
-        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+        if (isPasswordChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
                 throw new IllegalArgumentException("Invalid old password");
             }
@@ -140,7 +149,11 @@ public class UserServiceImpl {
         }
 
         try {
-            return userRepository.save(existingUser);
+            User savedUser = userRepository.save(existingUser);
+            if (isPasswordChanged) {
+                sessionService.revokeAllUserSessions(id);
+            }
+            return savedUser;
         } catch (DataIntegrityViolationException e) {
             if (dto.getEmail() != null) {
                 Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
