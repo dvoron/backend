@@ -2,11 +2,11 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
-import com.example.backend.model.dto.RefreshRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.service.impl.AuthServiceImpl;
 import com.example.backend.service.impl.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -31,6 +31,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import org.springframework.context.annotation.Import;
 import com.example.backend.config.SecurityConfig;
 import com.example.backend.config.JwtAuthFilter;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(AuthController.class)
 @Import({SecurityConfig.class, JwtAuthFilter.class})
@@ -65,7 +66,8 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("accessToken"))
-                .andExpect(jsonPath("$.refreshToken").value("refreshToken"));
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", "refreshToken"));
     }
 
     @Test
@@ -84,24 +86,22 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("accessToken"))
-                .andExpect(jsonPath("$.refreshToken").value("refreshToken"));
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", "refreshToken"));
     }
 
     @Test
     void refreshReturnsOkAndTokens() throws Exception {
-        RefreshRequestDto request = new RefreshRequestDto();
-        request.setRefreshToken("oldRefreshToken");
-
         AuthResponseDto response = new AuthResponseDto("newAccessToken", "newRefreshToken");
 
         when(authService.refresh("oldRefreshToken")).thenReturn(response);
 
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .cookie(new Cookie("refreshToken", "oldRefreshToken")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("newAccessToken"))
-                .andExpect(jsonPath("$.refreshToken").value("newRefreshToken"));
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", "newRefreshToken"));
     }
 
     @Test
@@ -115,12 +115,8 @@ class AuthControllerTest {
 
     @Test
     void refreshReturnsBadRequestWhenTokenIsEmpty() throws Exception {
-        RefreshRequestDto request = new RefreshRequestDto();
-        request.setRefreshToken("   ");
-
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .cookie(new Cookie("refreshToken", "   ")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("MISSING_REFRESH_TOKEN"))
                 .andExpect(jsonPath("$.message").value("Refresh token is missing"));

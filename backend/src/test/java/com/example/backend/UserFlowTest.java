@@ -3,6 +3,7 @@ package com.example.backend;
 import com.example.backend.model.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -185,7 +186,7 @@ class UserFlowTest {
                 .andReturn();
 
         AuthResponseDto authResponse1 = objectMapper.readValue(loginResult1.getResponse().getContentAsString(), AuthResponseDto.class);
-        String refreshToken1 = authResponse1.getRefreshToken();
+        String refreshToken1 = loginResult1.getResponse().getCookie("refreshToken").getValue();
 
         // 3. Login User Again (Session 2)
         MvcResult loginResult2 = mockMvc.perform(post("/api/auth/login")
@@ -195,31 +196,22 @@ class UserFlowTest {
                 .andReturn();
 
         AuthResponseDto authResponse2 = objectMapper.readValue(loginResult2.getResponse().getContentAsString(), AuthResponseDto.class);
-        String refreshToken2 = authResponse2.getRefreshToken();
+        String refreshToken2 = loginResult2.getResponse().getCookie("refreshToken").getValue();
         String accessToken2 = authResponse2.getAccessToken();
 
         // 4. Rotate Session 1's token (legitimate refresh)
-        RefreshRequestDto refreshRequest = new RefreshRequestDto();
-        refreshRequest.setRefreshToken(refreshToken1);
-
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .cookie(new Cookie("refreshToken", refreshToken1)))
                 .andExpect(status().isOk());
 
         // 5. Reuse Session 1's old token (simulated theft). This should return 401 and revoke ALL sessions.
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .cookie(new Cookie("refreshToken", refreshToken1)))
                 .andExpect(status().isUnauthorized());
 
         // 6. Verify Session 2 is revoked (attempting to refresh using Session 2's token should fail)
-        RefreshRequestDto refreshRequest2 = new RefreshRequestDto();
-        refreshRequest2.setRefreshToken(refreshToken2);
-
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest2)))
+                .cookie(new Cookie("refreshToken", refreshToken2)))
                 .andExpect(status().isUnauthorized());
 
         // 7. Verify Session 2's access token is rejected for protected endpoints because its session was revoked

@@ -2,7 +2,6 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
-import com.example.backend.model.dto.RefreshRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.service.impl.AuthServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,10 +75,8 @@ public class AuthController {
 
     @Operation(summary = "Refresh JWT token", description = "Obtains new JWT tokens using a valid refresh token")
     @PostMapping("/refresh")
-    public AuthResponseDto refresh(@CookieValue(name = "refreshToken", required = false) String refreshTokenCookie,
-                                   @RequestBody(required = false) RefreshRequestDto request,
+    public AuthResponseDto refresh(@CookieValue(name = "refreshToken", required = false) String token,
                                    HttpServletResponse response) {
-        String token = refreshTokenCookie != null ? refreshTokenCookie : (request != null ? request.getRefreshToken() : null);
         if (token == null || token.trim().isEmpty()) {
             throw new MissingRefreshTokenException("Refresh token is missing");
         }
