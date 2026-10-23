@@ -27,7 +27,8 @@ public class ForumController {
     public ResponseEntity<Page<PostDto>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<PostDto> posts = forumService.getAllPosts(page, size);
+        int cappedSize = Math.min(Math.max(1, size), 50);
+        Page<PostDto> posts = forumService.getAllPosts(page, cappedSize);
         return ResponseEntity.ok(posts);
     }
 

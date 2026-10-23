@@ -74,6 +74,24 @@ class ForumControllerTest {
     }
 
     @Test
+    void getAllPostsWithLargeSizeCapsAt50() throws Exception {
+        PostDto postDto = new PostDto();
+        postDto.setId(1L);
+        postDto.setTitle("Test Post");
+        postDto.setContent("Test Content");
+
+        Page<PostDto> page = new PageImpl<>(List.of(postDto));
+
+        when(forumService.getAllPosts(0, 50)).thenReturn(page);
+
+        mockMvc.perform(get("/api/forum/posts")
+                .param("size", "1000")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
     void createPostWithUserReturnsOkAndPost() throws Exception {
         CreatePostRequest request = new CreatePostRequest();
         request.setTitle("New Post");
