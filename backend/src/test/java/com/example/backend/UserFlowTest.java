@@ -231,6 +231,18 @@ class UserFlowTest {
                 .header("Authorization", "Bearer " + accessToken2)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest)))
-                .andExpect(status().isForbidden()); // JWT Auth Filter might throw 403 because it's forbidden if valid check fails. Let's see. Wait, I should just expect isForbidden() or isUnauthorized().
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void missingTokenReturns401() throws Exception {
+        CreatePostRequest postRequest = new CreatePostRequest();
+        postRequest.setTitle("Test Post");
+        postRequest.setContent("Test Content");
+
+        mockMvc.perform(post("/api/forum/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(postRequest)))
+                .andExpect(status().isUnauthorized());
     }
 }
