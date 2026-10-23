@@ -43,7 +43,7 @@ public class SessionServiceImpl {
         return new SessionCreateResult(saved.getId(), rawToken, userId);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
     public SessionCreateResult rotateSession(String rawRefreshToken) {
         UserSession session = sessionRepository
                 .findByRefreshTokenHash(hash(rawRefreshToken))

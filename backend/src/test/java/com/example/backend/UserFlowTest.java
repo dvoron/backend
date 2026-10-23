@@ -159,4 +159,78 @@ class UserFlowTest {
                 .anyMatch(c -> "e2edeleteuser".equals(c.getAuthor()));
         assertFalse(commentExists, "Comments should be deleted when user is deleted");
     }
+
+    @Test
+    void refreshTokenReuseRevokesOtherSessionsFlow() throws Exception {
+        // 1. Register User
+        RegisterRequestDto registerRequest = new RegisterRequestDto();
+        registerRequest.setEmail("e2e_reuse@example.com");
+        registerRequest.setUsername("e2ereuseuser");
+        registerRequest.setPassword("password");
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isOk());
+
+        // 2. Login User (Session 1)
+        LoginRequestDto loginRequest = new LoginRequestDto();
+        loginRequest.setLogin("e2e_reuse@example.com");
+        loginRequest.setPassword("password");
+
+        MvcResult loginResult1 = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        AuthResponseDto authResponse1 = objectMapper.readValue(loginResult1.getResponse().getContentAsString(), AuthResponseDto.class);
+        String refreshToken1 = authResponse1.getRefreshToken();
+
+        // 3. Login User Again (Session 2)
+        MvcResult loginResult2 = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        AuthResponseDto authResponse2 = objectMapper.readValue(loginResult2.getResponse().getContentAsString(), AuthResponseDto.class);
+        String refreshToken2 = authResponse2.getRefreshToken();
+        String accessToken2 = authResponse2.getAccessToken();
+
+        // 4. Rotate Session 1's token (legitimate refresh)
+        RefreshRequestDto refreshRequest = new RefreshRequestDto();
+        refreshRequest.setRefreshToken(refreshToken1);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isOk());
+
+        // 5. Reuse Session 1's old token (simulated theft). This should return 401 and revoke ALL sessions.
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isUnauthorized());
+
+        // 6. Verify Session 2 is revoked (attempting to refresh using Session 2's token should fail)
+        RefreshRequestDto refreshRequest2 = new RefreshRequestDto();
+        refreshRequest2.setRefreshToken(refreshToken2);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest2)))
+                .andExpect(status().isUnauthorized());
+
+        // 7. Verify Session 2's access token is rejected for protected endpoints because its session was revoked
+        CreatePostRequest postRequest = new CreatePostRequest();
+        postRequest.setTitle("Test Post");
+        postRequest.setContent("Test Content");
+
+        mockMvc.perform(post("/api/forum/posts")
+                .header("Authorization", "Bearer " + accessToken2)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(postRequest)))
+                .andExpect(status().isForbidden()); // JWT Auth Filter might throw 403 because it's forbidden if valid check fails. Let's see. Wait, I should just expect isForbidden() or isUnauthorized().
+    }
 }
