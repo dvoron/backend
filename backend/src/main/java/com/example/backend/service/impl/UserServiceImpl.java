@@ -26,6 +26,10 @@ import java.util.List;
 import java.util.Optional;
 
 
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+
 @Service
 public class UserServiceImpl {
 
@@ -59,11 +63,25 @@ public class UserServiceImpl {
                         new ResourceNotFoundException("User not found"));
     }
 
+    private String getClientIp() {
+        String ip = "unknown";
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
+            HttpServletRequest request = attrs.getRequest();
+            ip = request.getRemoteAddr();
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            if (forwardedFor != null && !forwardedFor.isEmpty()) {
+                ip = forwardedFor.split(",")[0].trim();
+            }
+        }
+        return ip;
+    }
+
     public User signIn(LoginRequestDto userLoginRequest) {
         String login = userLoginRequest.getLogin().toLowerCase();
+        String ip = getClientIp();
         
-        if (loginAttemptService.isBlocked(login)) {
-            log.warn("Login attempt blocked for user: {}", login);
+        if (loginAttemptService.isUsernameBlocked(login) || loginAttemptService.isIpBlocked(ip)) {
+            log.warn("Login attempt blocked for user: {} or ip: {}", login, ip);
             throw new AccountLockedException("Account locked due to too many failed login attempts");
         }
         
@@ -77,7 +95,7 @@ public class UserServiceImpl {
         if (userOpt.isPresent()) {
             if (passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
                 log.info("Success for user: {}", login);
-                loginAttemptService.loginSucceeded(login);
+                loginAttemptService.loginSucceeded(login, ip);
                 return userOpt.get();
             }
         } else {
@@ -86,7 +104,7 @@ public class UserServiceImpl {
         }
         
         log.warn("Login failed: User not found or wrong password for login: {}", login);
-        loginAttemptService.loginFailed(login);
+        loginAttemptService.loginFailed(login, ip);
         throw new WrongLoginCredentialsException();
     }
 
