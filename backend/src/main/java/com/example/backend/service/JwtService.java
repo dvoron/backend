@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.model.entity.User;
 import io.jsonwebtoken.Claims;

@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.InvalidRefreshTokenException;
 import com.example.backend.exception.ResourceNotFoundException;
@@ -15,17 +15,18 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @Service
-public class SessionServiceImpl {
+public class SessionService {
 
     private final UserSessionRepository sessionRepository;
 
     @Value("${jwt.refresh-token-expiry-days:30}")
     private int refreshTokenExpiryDays;
 
-    public SessionServiceImpl(UserSessionRepository sessionRepository) {
+    public SessionService(UserSessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository;
     }
 
@@ -83,11 +84,22 @@ public class SessionServiceImpl {
     }
 
     public void revokeAllUserSessions(Long userId) {
-        java.util.List<UserSession> sessions = sessionRepository.findByUserId(userId);
+        List<UserSession> sessions = sessionRepository.findByUserId(userId);
         for (UserSession session : sessions) {
             session.setRevoked(true);
         }
         sessionRepository.saveAll(sessions);
+    }
+
+    @Transactional
+    public void deleteAllUserSessions(Long userId) {
+        sessionRepository.deleteByUserId(userId);
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 * * * *") // run hourly
+    @Transactional
+    public void cleanupExpiredSessions() {
+        sessionRepository.deleteByExpiresAtBefore(Instant.now());
     }
 
     public boolean isSessionValid(UUID sessionId, Long userId) {

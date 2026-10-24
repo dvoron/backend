@@ -105,7 +105,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         if (statusCode instanceof HttpStatus status) {
             code = status.name();
         }
-        ErrorResponse error = new ErrorResponse(code, ex.getMessage());
+        ErrorResponse error = new ErrorResponse(code, "An unexpected error occurred");
         return ResponseEntity.status(statusCode).headers(headers).body(error);
     }
 

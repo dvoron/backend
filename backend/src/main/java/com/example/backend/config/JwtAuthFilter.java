@@ -1,7 +1,7 @@
 package com.example.backend.config;
 
-import com.example.backend.service.impl.JwtService;
-import com.example.backend.service.impl.SessionServiceImpl;
+import com.example.backend.service.JwtService;
+import com.example.backend.service.SessionService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,9 +22,9 @@ import java.util.UUID;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final SessionServiceImpl sessionService;
+    private final SessionService sessionService;
 
-    public JwtAuthFilter(JwtService jwtService, SessionServiceImpl sessionService) {
+    public JwtAuthFilter(JwtService jwtService, SessionService sessionService) {
         this.jwtService = jwtService;
         this.sessionService = sessionService;
     }
@@ -72,7 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception ignored) {
-            // Invalid token — request continues unauthenticated
+            // Invalid token - request continues unauthenticated
         }
 
         filterChain.doFilter(request, response);

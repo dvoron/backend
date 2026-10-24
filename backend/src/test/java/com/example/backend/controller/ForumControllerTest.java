@@ -4,9 +4,9 @@ import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
-import com.example.backend.service.impl.ForumServiceImpl;
-import com.example.backend.service.impl.JwtService;
-import com.example.backend.service.impl.SessionServiceImpl;
+import com.example.backend.service.ForumService;
+import com.example.backend.service.JwtService;
+import com.example.backend.service.SessionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +44,13 @@ class ForumControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ForumServiceImpl forumService;
+    private ForumService forumService;
 
     @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
-    private SessionServiceImpl sessionService;
+    private SessionService sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
@@ -108,7 +108,7 @@ class ForumControllerTest {
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("New Post"))
                 .andExpect(jsonPath("$.content").value("New Content"));
@@ -132,7 +132,7 @@ class ForumControllerTest {
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.content").value("New Comment"))
                 .andExpect(jsonPath("$.postId").value(1))

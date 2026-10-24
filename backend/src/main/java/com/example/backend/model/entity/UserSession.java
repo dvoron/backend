@@ -3,12 +3,18 @@ package com.example.backend.model.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import jakarta.persistence.Version;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
+@Table(indexes = {
+    @Index(name = "idx_user_session_refresh_token_hash", columnList = "refreshTokenHash"),
+    @Index(name = "idx_user_session_user_id", columnList = "userId")
+})
 public class UserSession {
 
     @Id

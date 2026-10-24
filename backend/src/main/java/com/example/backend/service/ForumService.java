@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.CommentDto;
@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ForumServiceImpl {
+public class ForumService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
 
-    public ForumServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
+    public ForumService(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
@@ -92,7 +92,7 @@ public class ForumServiceImpl {
     @Transactional(readOnly = true)
     public List<CommentDto> getCommentsByUserId(Long userId) {
         List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(userId);
-        return comments.stream().map(this::mapToDtoWithPostInfo).collect(Collectors.toList());
+        return comments.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     private PostDto mapToDto(Post post) {
@@ -141,25 +141,6 @@ public class ForumServiceImpl {
                 .collect(Collectors.toList());
         dto.setReplies(replies);
 
-        return dto;
-    }
-
-    private CommentDto mapToDtoWithPostInfo(Comment comment) {
-        CommentDto dto = mapToDto(comment);
-        // Post info is already set in mapToDto if comment.getPost() is not null
-        // But for replies, getPost() might be null depending on how the entity is mapped.
-        Post post = comment.getPost();
-        Comment current = comment;
-        while (post == null && current.getParentComment() != null) {
-            current = current.getParentComment();
-            post = current.getPost();
-        }
-        
-        if (post != null) {
-            dto.setPostTitle(post.getTitle());
-            dto.setPostId(post.getId());
-        }
-        
         return dto;
     }
 }

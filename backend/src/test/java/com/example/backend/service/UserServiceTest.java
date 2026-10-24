@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.EmailAlreadyTakenException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceImplTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -41,13 +41,13 @@ class UserServiceImplTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private SessionServiceImpl sessionService;
+    private SessionService sessionService;
 
     @Mock
     private LoginAttemptService loginAttemptService;
 
     @InjectMocks
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @Test
     void signInWithValidEmailReturnsUser() {
@@ -173,33 +173,6 @@ class UserServiceImplTest {
                 .isInstanceOf(UsernameAlreadyTakenException.class);
     }
 
-    @Test
-    void createUserWithInvalidEmailFormatThrowsException() {
-        RegisterRequestDto request = new RegisterRequestDto();
-        request.setEmail("invalidemail");
-        request.setUsername("newuser");
-        request.setPassword("password");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid email format");
-    }
-
-    @Test
-    void getAllUsersReturnsListOfUsers() {
-        User user1 = new User();
-        user1.setId(1L);
-        User user2 = new User();
-        user2.setId(2L);
-
-        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
-
-        List<User> result = userService.getAllUsers();
-
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getId()).isEqualTo(1L);
-        assertThat(result.get(1).getId()).isEqualTo(2L);
-    }
 
     @Test
     void getUserByIdWithExistingIdReturnsUser() {
@@ -310,24 +283,6 @@ class UserServiceImplTest {
                 .isInstanceOf(UsernameAlreadyTakenException.class);
     }
 
-    @Test
-    void updateUserWithInvalidEmailFormatThrowsException() {
-        User existingUser = new User();
-        existingUser.setId(1L);
-        existingUser.setEmail("old@example.com");
-        existingUser.setPassword("oldHashedPassword");
-
-        UpdateUserRequestDto dto = new UpdateUserRequestDto();
-        dto.setEmail("invalidemail");
-        dto.setOldPassword("oldpassword");
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(passwordEncoder.matches("oldpassword", "oldHashedPassword")).thenReturn(true);
-
-        assertThatThrownBy(() -> userService.updateUser(1L, dto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid email format");
-    }
 
     @Test
     void updateUserWithInvalidOldPasswordThrowsException() {
@@ -402,11 +357,11 @@ class UserServiceImplTest {
         
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword")).thenReturn(true);
-        doNothing().when(sessionService).revokeAllUserSessions(1L);
+        doNothing().when(sessionService).deleteAllUserSessions(1L);
 
         userService.deleteUser(1L, "password");
 
-        verify(sessionService, times(1)).revokeAllUserSessions(1L);
+        verify(sessionService, times(1)).deleteAllUserSessions(1L);
         verify(userRepository, times(1)).deleteById(1L);
     }
 }

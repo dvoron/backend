@@ -5,9 +5,9 @@ import com.example.backend.config.SecurityConfig;
 import com.example.backend.model.dto.DeleteUserRequestDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.impl.JwtService;
-import com.example.backend.service.impl.SessionServiceImpl;
-import com.example.backend.service.impl.UserServiceImpl;
+import com.example.backend.service.JwtService;
+import com.example.backend.service.SessionService;
+import com.example.backend.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +38,13 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
-    private SessionServiceImpl sessionService;
+    private SessionService sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 

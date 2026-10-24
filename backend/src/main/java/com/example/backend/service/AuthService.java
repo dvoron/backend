@@ -1,5 +1,6 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
+import com.example.backend.exception.InvalidRefreshTokenException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
@@ -11,13 +12,13 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class AuthServiceImpl {
+public class AuthService {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
     private final JwtService jwtService;
-    private final SessionServiceImpl sessionService;
+    private final SessionService sessionService;
 
-    public AuthServiceImpl(UserServiceImpl userService, JwtService jwtService, SessionServiceImpl sessionService) {
+    public AuthService(UserService userService, JwtService jwtService, SessionService sessionService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.sessionService = sessionService;
@@ -39,7 +40,7 @@ public class AuthServiceImpl {
         try {
             user = userService.getUserById(session.userId());
         } catch (ResourceNotFoundException e) {
-            throw new com.example.backend.exception.InvalidRefreshTokenException();
+            throw new InvalidRefreshTokenException();
         }
         String accessToken = jwtService.generateToken(user, session.sessionId());
         return new AuthResponseDto(accessToken, session.rawRefreshToken());

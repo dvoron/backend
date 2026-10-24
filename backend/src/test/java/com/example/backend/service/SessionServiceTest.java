@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.InvalidRefreshTokenException;
 import com.example.backend.model.dto.SessionCreateResult;
@@ -27,13 +27,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SessionServiceImplTest {
+class SessionServiceTest {
 
     @Mock
     private UserSessionRepository sessionRepository;
 
     @InjectMocks
-    private SessionServiceImpl sessionService;
+    private SessionService sessionService;
 
     @BeforeEach
     void setUp() {

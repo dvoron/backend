@@ -3,8 +3,8 @@ package com.example.backend.controller;
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
-import com.example.backend.service.impl.AuthServiceImpl;
-import com.example.backend.service.impl.JwtService;
+import com.example.backend.service.AuthService;
+import com.example.backend.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -41,13 +41,13 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AuthServiceImpl authService;
+    private AuthService authService;
 
     @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
-    private com.example.backend.service.impl.SessionServiceImpl sessionService;
+    private com.example.backend.service.SessionService sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
@@ -84,7 +84,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").value("accessToken"))
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", "refreshToken"));

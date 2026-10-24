@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ForumServiceImplTest {
+class ForumServiceTest {
 
     @Mock
     private PostRepository postRepository;
@@ -42,7 +42,7 @@ class ForumServiceImplTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private ForumServiceImpl forumService;
+    private ForumService forumService;
 
     @Test
     void getAllPostsReturnsListOfPostDtos() {

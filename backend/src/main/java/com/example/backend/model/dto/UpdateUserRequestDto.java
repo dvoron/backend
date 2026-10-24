@@ -11,10 +11,10 @@ public class UpdateUserRequestDto {
     @Size(max = 255)
     private String email;
     
-    @Size(max = 255)
+    @Size(min = 8, max = 255)
     private String oldPassword;
     
-    @Size(max = 255)
+    @Size(min = 8, max = 255)
     private String newPassword;
 
     public String getUsername() {

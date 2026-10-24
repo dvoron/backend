@@ -1,6 +1,8 @@
 package com.example.backend;
 
 import com.example.backend.model.dto.*;
+import com.example.backend.model.entity.UserSession;
+import com.example.backend.repository.UserSessionRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -15,6 +17,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -31,6 +35,9 @@ class UserFlowTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserSessionRepository userSessionRepository;
+
     private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
@@ -44,7 +51,7 @@ class UserFlowTest {
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").exists());
 
         // 2. Login User
@@ -72,7 +79,7 @@ class UserFlowTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("E2E Test Post"))
                 .andExpect(jsonPath("$.content").value("This is an E2E test post content."));
     }
@@ -88,7 +95,7 @@ class UserFlowTest {
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         // 2. Login User
         LoginRequestDto loginRequest = new LoginRequestDto();
@@ -118,7 +125,7 @@ class UserFlowTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         PostDto createdPost = objectMapper.readValue(postResult.getResponse().getContentAsString(), PostDto.class);
@@ -133,7 +140,7 @@ class UserFlowTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(commentRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         // 6. Delete User
         DeleteUserRequestDto deleteRequest = new DeleteUserRequestDto();
@@ -176,7 +183,7 @@ class UserFlowTest {
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         // 2. Login User (Session 1)
         LoginRequestDto loginRequest = new LoginRequestDto();
@@ -207,6 +214,13 @@ class UserFlowTest {
         mockMvc.perform(post("/api/auth/refresh")
                 .cookie(new Cookie("refreshToken", refreshToken1)))
                 .andExpect(status().isOk());
+
+        // Make the revoked session older than 30s to bypass the concurrent refresh grace period
+        UserSession s = userSessionRepository.findAll().stream()
+                .filter(us -> us.isRevoked() && us.getRevokedAt() != null)
+                .findFirst().orElseThrow();
+        s.setRevokedAt(Instant.now().minus(35, ChronoUnit.SECONDS));
+        userSessionRepository.save(s);
 
         // 5. Reuse Session 1's old token (simulated theft). This should return 401 and revoke ALL sessions.
         mockMvc.perform(post("/api/auth/refresh")
