@@ -66,4 +66,11 @@ public class ForumController {
         List<CommentDto> comments = forumService.getCommentsByUserId(userId);
         return ResponseEntity.ok(comments);
     }
+
+    @Operation(summary = "Get comment replies", description = "Retrieves a list of replies for a specific comment")
+    @GetMapping("/comments/{commentId}/replies")
+    public ResponseEntity<List<CommentDto>> getCommentReplies(@PathVariable Long commentId) {
+        List<CommentDto> replies = forumService.getRepliesForComment(commentId);
+        return ResponseEntity.ok(replies);
+    }
 }

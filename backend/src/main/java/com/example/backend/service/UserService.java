@@ -151,6 +151,10 @@ public class UserService {
                         new ResourceNotFoundException("User not found"));
 
         boolean isEmailChanged = dto.getEmail() != null && !dto.getEmail().isEmpty() && !dto.getEmail().equals(existingUser.getEmail());
+        
+        if (dto.getNewPassword() != null && dto.getNewPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password must not be blank");
+        }
         boolean isPasswordChanged = dto.getNewPassword() != null && !dto.getNewPassword().isEmpty();
         
         if (isEmailChanged) {

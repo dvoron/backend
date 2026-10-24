@@ -136,11 +136,19 @@ public class ForumService {
             dto.setPostId(comment.getPost().getId());
         }
 
-        List<CommentDto> replies = comment.getReplies().stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-        dto.setReplies(replies);
+        dto.setReplyCount(comment.getReplies() != null ? comment.getReplies().size() : 0);
+        dto.setReplies(new java.util.ArrayList<>());
 
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentDto> getRepliesForComment(Long commentId) {
+        Comment parentComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        
+        return parentComment.getReplies().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 }
