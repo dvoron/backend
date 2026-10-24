@@ -2,6 +2,7 @@ package com.example.backend.service.impl;
 
 
 
+import com.example.backend.exception.AccountLockedException;
 import com.example.backend.exception.EmailAlreadyTakenException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
@@ -35,13 +36,17 @@ public class UserServiceImpl {
     private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
     private final SessionServiceImpl sessionService;
+    private final LoginAttemptService loginAttemptService;
+    private final String dummyPasswordHash;
 
-    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder, SessionServiceImpl sessionService) {
+    public UserServiceImpl(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder, SessionServiceImpl sessionService, LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessionService = sessionService;
+        this.loginAttemptService = loginAttemptService;
+        this.dummyPasswordHash = passwordEncoder.encode("dummy-password-for-timing-attack-prevention");
     }
 
     public List<User> getAllUsers() {
@@ -55,23 +60,33 @@ public class UserServiceImpl {
     }
 
     public User signIn(LoginRequestDto userLoginRequest) {
-        String login = userLoginRequest.getLogin();
+        String login = userLoginRequest.getLogin().toLowerCase();
         
+        if (loginAttemptService.isBlocked(login)) {
+            log.warn("Login attempt blocked for user: {}", login);
+            throw new AccountLockedException("Account locked due to too many failed login attempts");
+        }
+        
+        Optional<User> userOpt;
         if (login.contains("@")) {
-            Optional<User> userOpt = userRepository.findByEmail(login);
-            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
-                log.info("email and password Success for user: {}", login);
+            userOpt = userRepository.findByEmail(login);
+        } else {
+            userOpt = userRepository.findByUsername(login);
+        }
+
+        if (userOpt.isPresent()) {
+            if (passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
+                log.info("Success for user: {}", login);
+                loginAttemptService.loginSucceeded(login);
                 return userOpt.get();
             }
         } else {
-            Optional<User> userOpt = userRepository.findByUsername(login);
-            if (userOpt.isPresent() && passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
-                log.info("username and password Success for user: {}", login);
-                return userOpt.get();
-            }
+            // Mitigate timing attack
+            passwordEncoder.matches(userLoginRequest.getPassword(), dummyPasswordHash);
         }
         
         log.warn("Login failed: User not found or wrong password for login: {}", login);
+        loginAttemptService.loginFailed(login);
         throw new WrongLoginCredentialsException();
     }
 
@@ -79,8 +94,14 @@ public class UserServiceImpl {
         if (request.getEmail() == null || !request.getEmail().contains("@")) {
             throw new IllegalArgumentException("Invalid email format");
         }
-        if (request.getUsername() != null && request.getUsername().contains("@")) {
-            throw new IllegalArgumentException("Username cannot contain '@'");
+        String email = request.getEmail().toLowerCase();
+        request.setEmail(email);
+
+        if (request.getUsername() != null) {
+            if (request.getUsername().contains("@")) {
+                throw new IllegalArgumentException("Username cannot contain '@'");
+            }
+            request.setUsername(request.getUsername().toLowerCase());
         }
         
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -106,6 +127,12 @@ public class UserServiceImpl {
     }
 
     public User updateUser(Long id, com.example.backend.model.dto.UpdateUserRequestDto dto) {
+        if (dto.getEmail() != null) {
+            dto.setEmail(dto.getEmail().toLowerCase());
+        }
+        if (dto.getUsername() != null) {
+            dto.setUsername(dto.getUsername().toLowerCase());
+        }
 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->

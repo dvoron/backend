@@ -43,6 +43,9 @@ class UserServiceImplTest {
     @Mock
     private SessionServiceImpl sessionService;
 
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
