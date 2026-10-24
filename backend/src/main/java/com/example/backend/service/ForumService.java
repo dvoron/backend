@@ -111,7 +111,7 @@ public class ForumService {
 
         List<CommentDto> comments = post.getComments().stream()
                 .filter(c -> c.getParentComment() == null) // only top level
-                .map(this::mapToDto)
+                .map(c -> mapToDto(c, 5))
                 .collect(Collectors.toList());
         dto.setComments(comments);
 
@@ -119,6 +119,10 @@ public class ForumService {
     }
 
     private CommentDto mapToDto(Comment comment) {
+        return mapToDto(comment, 0);
+    }
+
+    private CommentDto mapToDto(Comment comment, int depth) {
         CommentDto dto = new CommentDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
@@ -136,8 +140,16 @@ public class ForumService {
             dto.setPostId(comment.getPost().getId());
         }
 
-        dto.setReplyCount(comment.getReplies() != null ? comment.getReplies().size() : 0);
-        dto.setReplies(new java.util.ArrayList<>());
+        if (depth > 0) {
+            List<CommentDto> replies = comment.getReplies().stream()
+                    .map(c -> mapToDto(c, depth - 1))
+                    .collect(Collectors.toList());
+            dto.setReplies(replies);
+            dto.setReplyCount(replies.size());
+        } else {
+            dto.setReplyCount(comment.getReplies() != null ? comment.getReplies().size() : 0);
+            dto.setReplies(new java.util.ArrayList<>());
+        }
 
         return dto;
     }
@@ -148,7 +160,7 @@ public class ForumService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
         
         return parentComment.getReplies().stream()
-                .map(this::mapToDto)
+                .map(c -> mapToDto(c, 5))
                 .collect(Collectors.toList());
     }
 }
