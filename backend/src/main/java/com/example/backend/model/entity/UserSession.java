@@ -25,6 +25,8 @@ public class UserSession {
 
     private boolean revoked;
 
+    private Instant revokedAt;
+
     @Version
     private Long version;
 
@@ -70,6 +72,14 @@ public class UserSession {
 
     public void setRevoked(boolean revoked) {
         this.revoked = revoked;
+    }
+
+    public Instant getRevokedAt() {
+        return revokedAt;
+    }
+
+    public void setRevokedAt(Instant revokedAt) {
+        this.revokedAt = revokedAt;
     }
 
     public Long getVersion() {

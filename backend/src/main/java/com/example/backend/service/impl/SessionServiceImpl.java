@@ -50,17 +50,23 @@ public class SessionServiceImpl {
                 .orElseThrow(InvalidRefreshTokenException::new);
 
         if (session.isRevoked()) {
+            if (session.getRevokedAt() != null && 
+                session.getRevokedAt().plusSeconds(30).isAfter(Instant.now())) {
+                throw new InvalidRefreshTokenException("Token recently rotated by another request");
+            }
             revokeAllUserSessions(session.getUserId());
             throw new InvalidRefreshTokenException();
         }
 
         if (session.getExpiresAt().isBefore(Instant.now())) {
             session.setRevoked(true);
+            session.setRevokedAt(Instant.now());
             sessionRepository.save(session);
             throw new InvalidRefreshTokenException();
         }
 
         session.setRevoked(true);
+        session.setRevokedAt(Instant.now());
         sessionRepository.save(session);
 
         return createSession(session.getUserId());

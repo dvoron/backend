@@ -1,10 +1,12 @@
 package com.example.backend.exception;
 
 import com.example.backend.model.dto.error.ErrorResponse;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -105,6 +107,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         }
         ErrorResponse error = new ErrorResponse(code, ex.getMessage());
         return ResponseEntity.status(statusCode).headers(headers).body(error);
+    }
+
+    @ExceptionHandler({
+        ObjectOptimisticLockingFailureException.class,
+        OptimisticLockException.class
+    })
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(Exception ex) {
+        log.warn("Optimistic locking failure (likely concurrent refresh): {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("CONFLICT", "Concurrent request detected. Please try again.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(Exception.class)
