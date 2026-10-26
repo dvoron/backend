@@ -2,9 +2,8 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.LoginRequestDto;
-import com.example.backend.model.dto.RefreshRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
-import com.example.backend.service.impl.AuthServiceImpl;
+import com.example.backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,12 +24,12 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthServiceImpl authService;
+    private final AuthService authService;
 
     @Value("${jwt.refresh-token-expiry-days:30}")
     private int refreshTokenExpiryDays;
 
-    public AuthController(AuthServiceImpl authService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
@@ -68,6 +67,7 @@ public class AuthController {
 
     @Operation(summary = "Register user", description = "Registers a new user and returns JWT access and refresh tokens")
     @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public AuthResponseDto register(@Valid @RequestBody RegisterRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.register(request);
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
@@ -76,10 +76,8 @@ public class AuthController {
 
     @Operation(summary = "Refresh JWT token", description = "Obtains new JWT tokens using a valid refresh token")
     @PostMapping("/refresh")
-    public AuthResponseDto refresh(@CookieValue(name = "refreshToken", required = false) String refreshTokenCookie,
-                                   @RequestBody(required = false) RefreshRequestDto request,
+    public AuthResponseDto refresh(@CookieValue(name = "refreshToken", required = false) String token,
                                    HttpServletResponse response) {
-        String token = refreshTokenCookie != null ? refreshTokenCookie : (request != null ? request.getRefreshToken() : null);
         if (token == null || token.trim().isEmpty()) {
             throw new MissingRefreshTokenException("Refresh token is missing");
         }

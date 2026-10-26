@@ -1,6 +1,7 @@
 package com.example.backend.model.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UpdateUserRequestDto {
@@ -11,10 +12,11 @@ public class UpdateUserRequestDto {
     @Size(max = 255)
     private String email;
     
-    @Size(max = 255)
+    @Size(min = 8, max = 255)
     private String oldPassword;
     
-    @Size(max = 255)
+    @Size(min = 8, max = 255)
+    @Pattern(regexp = ".*\\S.*", message = "Password must not be blank")
     private String newPassword;
 
     public String getUsername() {

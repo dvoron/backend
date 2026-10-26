@@ -1,5 +1,7 @@
 package com.example.backend.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class AuthResponseDto {
 
     private String accessToken;
@@ -17,6 +19,7 @@ public class AuthResponseDto {
         return accessToken;
     }
 
+    @JsonIgnore
     public String getRefreshToken() {
         return refreshToken;
     }

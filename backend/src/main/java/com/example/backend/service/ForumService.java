@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.CommentDto;
@@ -21,22 +21,27 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ForumServiceImpl {
+public class ForumService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
 
-    public ForumServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
+    public ForumService(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
-    public Page<PostDto> getAllPosts(int page, int size) {
-        Page<Post> posts = postRepository.findAllByOrderByTimestampDesc(PageRequest.of(page, size));
-        return posts.map(this::mapToDto);
+    public List<PostDto> getAllPosts(Long cursor, int size) {
+        List<Post> posts;
+        if (cursor == null) {
+            posts = postRepository.findAllByOrderByIdDesc(PageRequest.of(0, size));
+        } else {
+            posts = postRepository.findByIdLessThanOrderByIdDesc(cursor, PageRequest.of(0, size));
+        }
+        return posts.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Transactional
@@ -92,7 +97,7 @@ public class ForumServiceImpl {
     @Transactional(readOnly = true)
     public List<CommentDto> getCommentsByUserId(Long userId) {
         List<Comment> comments = commentRepository.findByAuthorIdOrderByTimestampDesc(userId);
-        return comments.stream().map(this::mapToDtoWithPostInfo).collect(Collectors.toList());
+        return comments.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     private PostDto mapToDto(Post post) {
@@ -100,12 +105,18 @@ public class ForumServiceImpl {
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
-        dto.setAuthor(post.getAuthor().getUsername());
+        
+        if (post.getAuthor() != null) {
+            dto.setAuthor(post.getAuthor().getUsername());
+        } else {
+            dto.setAuthor("[deleted user]");
+        }
+        
         dto.setTimestamp(post.getTimestamp());
 
         List<CommentDto> comments = post.getComments().stream()
                 .filter(c -> c.getParentComment() == null) // only top level
-                .map(this::mapToDto)
+                .map(c -> mapToDto(c, 5))
                 .collect(Collectors.toList());
         dto.setComments(comments);
 
@@ -113,10 +124,20 @@ public class ForumServiceImpl {
     }
 
     private CommentDto mapToDto(Comment comment) {
+        return mapToDto(comment, 0);
+    }
+
+    private CommentDto mapToDto(Comment comment, int depth) {
         CommentDto dto = new CommentDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
-        dto.setAuthor(comment.getAuthor().getUsername());
+        
+        if (comment.getAuthor() != null) {
+            dto.setAuthor(comment.getAuthor().getUsername());
+        } else {
+            dto.setAuthor("[deleted user]");
+        }
+        
         dto.setTimestamp(comment.getTimestamp());
 
         if (comment.getPost() != null) {
@@ -124,30 +145,27 @@ public class ForumServiceImpl {
             dto.setPostId(comment.getPost().getId());
         }
 
-        List<CommentDto> replies = comment.getReplies().stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-        dto.setReplies(replies);
+        if (depth > 0) {
+            List<CommentDto> replies = comment.getReplies().stream()
+                    .map(c -> mapToDto(c, depth - 1))
+                    .collect(Collectors.toList());
+            dto.setReplies(replies);
+            dto.setReplyCount(replies.size());
+        } else {
+            dto.setReplyCount(comment.getReplies() != null ? comment.getReplies().size() : 0);
+            dto.setReplies(new java.util.ArrayList<>());
+        }
 
         return dto;
     }
 
-    private CommentDto mapToDtoWithPostInfo(Comment comment) {
-        CommentDto dto = mapToDto(comment);
-        // Post info is already set in mapToDto if comment.getPost() is not null
-        // But for replies, getPost() might be null depending on how the entity is mapped.
-        Post post = comment.getPost();
-        Comment current = comment;
-        while (post == null && current.getParentComment() != null) {
-            current = current.getParentComment();
-            post = current.getPost();
-        }
+    @Transactional(readOnly = true)
+    public List<CommentDto> getRepliesForComment(Long commentId) {
+        Comment parentComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
         
-        if (post != null) {
-            dto.setPostTitle(post.getTitle());
-            dto.setPostId(post.getId());
-        }
-        
-        return dto;
+        return parentComment.getReplies().stream()
+                .map(c -> mapToDto(c, 5))
+                .collect(Collectors.toList());
     }
 }

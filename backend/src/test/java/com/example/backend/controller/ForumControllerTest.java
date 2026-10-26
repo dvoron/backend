@@ -4,16 +4,14 @@ import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
 import com.example.backend.model.dto.PostDto;
-import com.example.backend.service.impl.ForumServiceImpl;
-import com.example.backend.service.impl.JwtService;
-import com.example.backend.service.impl.SessionServiceImpl;
+import com.example.backend.service.ForumService;
+import com.example.backend.service.JwtService;
+import com.example.backend.service.SessionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -44,13 +42,13 @@ class ForumControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ForumServiceImpl forumService;
+    private ForumService forumService;
 
     @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
-    private SessionServiceImpl sessionService;
+    private SessionService sessionService;
 
     private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
@@ -61,16 +59,34 @@ class ForumControllerTest {
         postDto.setTitle("Test Post");
         postDto.setContent("Test Content");
 
-        Page<PostDto> page = new PageImpl<>(List.of(postDto));
+        List<PostDto> list = List.of(postDto);
 
-        when(forumService.getAllPosts(0, 10)).thenReturn(page);
+        when(forumService.getAllPosts(null, 10)).thenReturn(list);
 
         mockMvc.perform(get("/api/forum/posts")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1))
-                .andExpect(jsonPath("$.content[0].title").value("Test Post"))
-                .andExpect(jsonPath("$.content[0].content").value("Test Content"));
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Test Post"))
+                .andExpect(jsonPath("$[0].content").value("Test Content"));
+    }
+
+    @Test
+    void getAllPostsWithLargeSizeCapsAt50() throws Exception {
+        PostDto postDto = new PostDto();
+        postDto.setId(1L);
+        postDto.setTitle("Test Post");
+        postDto.setContent("Test Content");
+
+        List<PostDto> list = List.of(postDto);
+
+        when(forumService.getAllPosts(null, 50)).thenReturn(list);
+
+        mockMvc.perform(get("/api/forum/posts")
+                .param("size", "1000")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
@@ -90,7 +106,7 @@ class ForumControllerTest {
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("New Post"))
                 .andExpect(jsonPath("$.content").value("New Content"));
@@ -114,7 +130,7 @@ class ForumControllerTest {
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.content").value("New Comment"))
                 .andExpect(jsonPath("$.postId").value(1))

@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
@@ -15,8 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
@@ -30,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ForumServiceImplTest {
+class ForumServiceTest {
 
     @Mock
     private PostRepository postRepository;
@@ -42,7 +40,7 @@ class ForumServiceImplTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private ForumServiceImpl forumService;
+    private ForumService forumService;
 
     @Test
     void getAllPostsReturnsListOfPostDtos() {
@@ -57,15 +55,15 @@ class ForumServiceImplTest {
         post.setTimestamp(Instant.now());
         post.setComments(new ArrayList<>());
 
-        Page<Post> page = new PageImpl<>(List.of(post));
+        List<Post> list = List.of(post);
 
-        when(postRepository.findAllByOrderByTimestampDesc(any(Pageable.class))).thenReturn(page);
+        when(postRepository.findAllByOrderByIdDesc(any(Pageable.class))).thenReturn(list);
 
-        Page<PostDto> result = forumService.getAllPosts(0, 10);
+        List<PostDto> result = forumService.getAllPosts(null, 10);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
-        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Test Post");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(0).getTitle()).isEqualTo("Test Post");
     }
 
     @Test

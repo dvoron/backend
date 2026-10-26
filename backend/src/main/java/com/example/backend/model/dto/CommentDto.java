@@ -9,6 +9,7 @@ public class CommentDto {
     private String content;
     private Instant timestamp;
     private List<CommentDto> replies;
+    private int replyCount;
     private String postTitle;
     private Long postId;
 
@@ -52,6 +53,14 @@ public class CommentDto {
 
     public void setReplies(List<CommentDto> replies) {
         this.replies = replies;
+    }
+
+    public int getReplyCount() {
+        return replyCount;
+    }
+
+    public void setReplyCount(int replyCount) {
+        this.replyCount = replyCount;
     }
 
     public String getPostTitle() {

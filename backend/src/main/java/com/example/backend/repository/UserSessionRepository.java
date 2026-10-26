@@ -7,10 +7,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserSessionRepository extends JpaRepository<UserSession, UUID> {
-
-    Optional<UserSession> findByRefreshTokenHashAndRevokedFalse(String refreshTokenHash);
     
     Optional<UserSession> findByRefreshTokenHash(String refreshTokenHash);
     
     java.util.List<UserSession> findByUserId(Long userId);
+    
+    void deleteByExpiresAtBefore(java.time.Instant expiry);
+    
+    void deleteByUserId(Long userId);
 }

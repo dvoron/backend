@@ -1,9 +1,10 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.dto.DeleteUserRequestDto;
 import com.example.backend.model.dto.UserDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
-import com.example.backend.service.impl.UserServiceImpl;
+import com.example.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,9 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
-    public UserController(UserServiceImpl userService) {
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
@@ -45,7 +46,7 @@ public class UserController {
 
     @Operation(summary = "Delete user", description = "Deletes a user by user ID")
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id, @Valid @RequestBody com.example.backend.model.dto.DeleteUserRequestDto request, Authentication authentication) {
+    public void deleteUser(@PathVariable Long id, @Valid @RequestBody DeleteUserRequestDto request, Authentication authentication) {
         verifyOwnership(id, authentication);
         userService.deleteUser(id, request.getPassword());
     }

@@ -11,6 +11,14 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"author"})
     Page<Post> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author"})
+    List<Post> findAllByOrderByIdDesc(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author"})
+    List<Post> findByIdLessThanOrderByIdDesc(Long id, Pageable pageable);
     
     List<Post> findByAuthorIdOrderByTimestampDesc(Long authorId);
+    
+    List<Post> findByAuthorId(Long authorId);
 }

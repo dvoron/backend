@@ -1,4 +1,4 @@
-package com.example.backend.service.impl;
+package com.example.backend.service;
 
 import com.example.backend.exception.InvalidRefreshTokenException;
 import com.example.backend.exception.ResourceNotFoundException;
@@ -15,17 +15,18 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @Service
-public class SessionServiceImpl {
+public class SessionService {
 
     private final UserSessionRepository sessionRepository;
 
     @Value("${jwt.refresh-token-expiry-days:30}")
     private int refreshTokenExpiryDays;
 
-    public SessionServiceImpl(UserSessionRepository sessionRepository) {
+    public SessionService(UserSessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository;
     }
 
@@ -43,24 +44,30 @@ public class SessionServiceImpl {
         return new SessionCreateResult(saved.getId(), rawToken, userId);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
     public SessionCreateResult rotateSession(String rawRefreshToken) {
         UserSession session = sessionRepository
                 .findByRefreshTokenHash(hash(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
 
         if (session.isRevoked()) {
+            if (session.getRevokedAt() != null && 
+                session.getRevokedAt().plusSeconds(30).isAfter(Instant.now())) {
+                throw new InvalidRefreshTokenException("Token recently rotated by another request");
+            }
             revokeAllUserSessions(session.getUserId());
             throw new InvalidRefreshTokenException();
         }
 
         if (session.getExpiresAt().isBefore(Instant.now())) {
             session.setRevoked(true);
+            session.setRevokedAt(Instant.now());
             sessionRepository.save(session);
             throw new InvalidRefreshTokenException();
         }
 
         session.setRevoked(true);
+        session.setRevokedAt(Instant.now());
         sessionRepository.save(session);
 
         return createSession(session.getUserId());
@@ -77,17 +84,28 @@ public class SessionServiceImpl {
     }
 
     public void revokeAllUserSessions(Long userId) {
-        java.util.List<UserSession> sessions = sessionRepository.findByUserId(userId);
+        List<UserSession> sessions = sessionRepository.findByUserId(userId);
         for (UserSession session : sessions) {
             session.setRevoked(true);
         }
         sessionRepository.saveAll(sessions);
     }
 
-    public boolean isSessionValid(UUID sessionId) {
-        if (sessionId == null) return false;
+    @Transactional
+    public void deleteAllUserSessions(Long userId) {
+        sessionRepository.deleteByUserId(userId);
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 * * * *") // run hourly
+    @Transactional
+    public void cleanupExpiredSessions() {
+        sessionRepository.deleteByExpiresAtBefore(Instant.now());
+    }
+
+    public boolean isSessionValid(UUID sessionId, Long userId) {
+        if (sessionId == null || userId == null) return false;
         return sessionRepository.findById(sessionId)
-                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()))
+                .map(session -> !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now()) && session.getUserId().equals(userId))
                 .orElse(false);
     }
 
