@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class LoginAttemptService {
 
-    private static final int MAX_ATTEMPT_USERNAME = 5;
-    private static final int MAX_ATTEMPT_IP = 10;
+    private static final int MAX_ATTEMPT = 5;
     private static final int LOCK_TIME_DURATION = 1; // in minutes
 
     private static class AttemptInfo {
@@ -17,48 +16,33 @@ public class LoginAttemptService {
         LocalDateTime lockTime;
     }
 
-    private final ConcurrentHashMap<String, AttemptInfo> attemptsByUsername = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, AttemptInfo> attemptsByIp = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, AttemptInfo> attemptsCache = new ConcurrentHashMap<>();
 
-    public void loginSucceeded(String username, String ip) {
-        attemptsByUsername.remove(username);
-        attemptsByIp.remove(ip);
+    public void loginSucceeded(String key) {
+        attemptsCache.remove(key);
     }
 
-    public void loginFailed(String username, String ip) {
-        recordFailure(attemptsByUsername, username, MAX_ATTEMPT_USERNAME);
-        recordFailure(attemptsByIp, ip, MAX_ATTEMPT_IP);
-    }
-
-    private void recordFailure(ConcurrentHashMap<String, AttemptInfo> cache, String key, int maxAttempt) {
-        cache.compute(key, (k, v) -> {
+    public void loginFailed(String key) {
+        attemptsCache.compute(key, (k, v) -> {
             if (v == null) {
                 v = new AttemptInfo();
             }
             v.count++;
-            if (v.count >= maxAttempt && v.lockTime == null) {
+            if (v.count >= MAX_ATTEMPT && v.lockTime == null) {
                 v.lockTime = LocalDateTime.now();
             }
             return v;
         });
     }
 
-    public boolean isUsernameBlocked(String username) {
-        return isBlocked(attemptsByUsername, username, MAX_ATTEMPT_USERNAME);
-    }
-
-    public boolean isIpBlocked(String ip) {
-        return isBlocked(attemptsByIp, ip, MAX_ATTEMPT_IP);
-    }
-
-    private boolean isBlocked(ConcurrentHashMap<String, AttemptInfo> cache, String key, int maxAttempt) {
-        AttemptInfo info = cache.get(key);
+    public boolean isBlocked(String key) {
+        AttemptInfo info = attemptsCache.get(key);
         if (info == null) {
             return false;
         }
-        if (info.count >= maxAttempt) {
+        if (info.count >= MAX_ATTEMPT) {
             if (info.lockTime != null && info.lockTime.plusMinutes(LOCK_TIME_DURATION).isBefore(LocalDateTime.now())) {
-                cache.remove(key);
+                attemptsCache.remove(key);
                 return false;
             }
             return true;
