@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -61,16 +59,16 @@ class ForumControllerTest {
         postDto.setTitle("Test Post");
         postDto.setContent("Test Content");
 
-        Page<PostDto> page = new PageImpl<>(List.of(postDto));
+        List<PostDto> list = List.of(postDto);
 
-        when(forumService.getAllPosts(0, 10)).thenReturn(page);
+        when(forumService.getAllPosts(null, 10)).thenReturn(list);
 
         mockMvc.perform(get("/api/forum/posts")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1))
-                .andExpect(jsonPath("$.content[0].title").value("Test Post"))
-                .andExpect(jsonPath("$.content[0].content").value("Test Content"));
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Test Post"))
+                .andExpect(jsonPath("$[0].content").value("Test Content"));
     }
 
     @Test
@@ -80,15 +78,15 @@ class ForumControllerTest {
         postDto.setTitle("Test Post");
         postDto.setContent("Test Content");
 
-        Page<PostDto> page = new PageImpl<>(List.of(postDto));
+        List<PostDto> list = List.of(postDto);
 
-        when(forumService.getAllPosts(0, 50)).thenReturn(page);
+        when(forumService.getAllPosts(null, 50)).thenReturn(list);
 
         mockMvc.perform(get("/api/forum/posts")
                 .param("size", "1000")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1));
+                .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test

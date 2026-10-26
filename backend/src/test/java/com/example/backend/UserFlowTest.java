@@ -157,8 +157,7 @@ class UserFlowTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode jsonNode = objectMapper.readTree(allPostsResult.getResponse().getContentAsString());
-        PostDto[] allPosts = objectMapper.treeToValue(jsonNode.get("content"), PostDto[].class);
+        PostDto[] allPosts = objectMapper.readValue(allPostsResult.getResponse().getContentAsString(), PostDto[].class);
         
         boolean postAnonymised = Arrays.stream(allPosts)
                 .filter(p -> p.getId().equals(postId))

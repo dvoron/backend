@@ -27,13 +27,13 @@ public class ForumController {
         this.forumService = forumService;
     }
 
-    @Operation(summary = "Get all posts", description = "Retrieves a paginated list of all posts")
+    @Operation(summary = "Get all posts", description = "Retrieves a cursor-paginated list of all posts")
     @GetMapping("/posts")
-    public ResponseEntity<Page<PostDto>> getAllPosts(
-            @RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<List<PostDto>> getAllPosts(
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
         int cappedSize = Math.min(Math.max(1, size), 50);
-        Page<PostDto> posts = forumService.getAllPosts(page, cappedSize);
+        List<PostDto> posts = forumService.getAllPosts(cursor, cappedSize);
         return ResponseEntity.ok(posts);
     }
 

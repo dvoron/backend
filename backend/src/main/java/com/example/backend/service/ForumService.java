@@ -34,9 +34,14 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PostDto> getAllPosts(int page, int size) {
-        Page<Post> posts = postRepository.findAllByOrderByTimestampDesc(PageRequest.of(page, size));
-        return posts.map(this::mapToDto);
+    public List<PostDto> getAllPosts(Long cursor, int size) {
+        List<Post> posts;
+        if (cursor == null) {
+            posts = postRepository.findAllByOrderByIdDesc(PageRequest.of(0, size));
+        } else {
+            posts = postRepository.findByIdLessThanOrderByIdDesc(cursor, PageRequest.of(0, size));
+        }
+        return posts.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Transactional
