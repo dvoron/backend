@@ -141,6 +141,11 @@ public class UserService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
 
+        if (loginAttemptService.isBlocked(existingUser.getUsername())) {
+            log.warn("Update attempt blocked for user: {}", existingUser.getUsername());
+            throw new AccountLockedException("Account locked due to too many failed login attempts");
+        }
+
         boolean isEmailChanged = dto.getEmail() != null && !dto.getEmail().isEmpty() && !dto.getEmail().equals(existingUser.getEmail());
         
         if (dto.getNewPassword() != null && dto.getNewPassword().trim().isEmpty()) {
@@ -150,6 +155,7 @@ public class UserService {
         
         if (isEmailChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
+                loginAttemptService.loginFailed(existingUser.getUsername());
                 throw new IllegalArgumentException("Current password is required to change email");
             }
         }
@@ -174,10 +180,15 @@ public class UserService {
         }
         if (isPasswordChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
+                loginAttemptService.loginFailed(existingUser.getUsername());
                 throw new IllegalArgumentException("Invalid old password");
             }
             String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
             existingUser.setPassword(hashedPassword);
+        }
+
+        if (isEmailChanged || isPasswordChanged) {
+            loginAttemptService.loginSucceeded(existingUser.getUsername());
         }
 
         try {
@@ -208,9 +219,17 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
+        if (loginAttemptService.isBlocked(user.getUsername())) {
+            log.warn("Delete attempt blocked for user: {}", user.getUsername());
+            throw new AccountLockedException("Account locked due to too many failed login attempts");
+        }
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            loginAttemptService.loginFailed(user.getUsername());
             throw new IllegalArgumentException("Invalid password");
         }
+        
+        loginAttemptService.loginSucceeded(user.getUsername());
         
         sessionService.deleteAllUserSessions(id);
         
