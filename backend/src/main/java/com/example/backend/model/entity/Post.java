@@ -27,6 +27,7 @@ public class Post {
     private User author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("timestamp ASC")
     private List<Comment> comments = new ArrayList<>();
 
     @Formula("(SELECT count(*) FROM comments c WHERE c.post_id = id AND c.parent_comment_id IS NULL)")

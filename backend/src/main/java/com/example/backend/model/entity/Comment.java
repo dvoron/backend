@@ -33,6 +33,7 @@ public class Comment {
     private Comment parentComment;
 
     @OneToMany(mappedBy = "parentComment")
+    @OrderBy("timestamp ASC")
     private List<Comment> replies = new ArrayList<>();
 
     @Formula("(SELECT count(*) FROM comments c WHERE c.parent_comment_id = id)")
