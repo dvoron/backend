@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public class UpdateUserRequestDto {
     @Size(max = 255)
+    @Pattern(regexp = "^(?!\\s*$).+", message = "Username must not be purely whitespace")
     private String username;
     
     @Email

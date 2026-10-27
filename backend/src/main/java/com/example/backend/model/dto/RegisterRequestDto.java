@@ -2,11 +2,13 @@ package com.example.backend.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class RegisterRequestDto {
     @NotBlank
     @Size(max = 255)
+    @Pattern(regexp = "^(?!\\s*$).+", message = "Username must not be purely whitespace")
     private String username;
     
     @NotBlank

@@ -95,14 +95,15 @@ public class UserService {
     }
 
     public User createUser(RegisterRequestDto request) {
-        String email = request.getEmail().toLowerCase();
+        String email = request.getEmail().trim().toLowerCase();
         request.setEmail(email);
 
         if (request.getUsername() != null) {
-            if (request.getUsername().contains("@")) {
+            String trimmedUsername = request.getUsername().trim();
+            if (trimmedUsername.contains("@")) {
                 throw new IllegalArgumentException("Username cannot contain '@'");
             }
-            request.setUsername(request.getUsername().toLowerCase());
+            request.setUsername(trimmedUsername.toLowerCase());
         }
         
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -153,15 +154,16 @@ public class UserService {
             }
         }
 
-        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
-            if (dto.getUsername().contains("@")) {
+        if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
+            String trimmedUsername = dto.getUsername().trim();
+            if (trimmedUsername.contains("@")) {
                 throw new IllegalArgumentException("Username cannot contain '@'");
             }
-            Optional<User> byUsername = userRepository.findByUsername(dto.getUsername());
+            Optional<User> byUsername = userRepository.findByUsername(trimmedUsername);
             if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
-                throw new UsernameAlreadyTakenException(dto.getUsername());
+                throw new UsernameAlreadyTakenException(trimmedUsername);
             }
-            existingUser.setUsername(dto.getUsername());
+            existingUser.setUsername(trimmedUsername);
         }
         if (isEmailChanged) {
             Optional<User> byEmail = userRepository.findByEmail(dto.getEmail());
