@@ -2,12 +2,14 @@ package com.example.backend.controller;
 
 import com.example.backend.config.JwtAuthFilter;
 import com.example.backend.config.SecurityConfig;
+import com.example.backend.model.dto.AuthResponseDto;
 import com.example.backend.model.dto.DeleteUserRequestDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
 import com.example.backend.model.entity.User;
 import com.example.backend.service.JwtService;
 import com.example.backend.service.SessionService;
 import com.example.backend.service.UserService;
+import com.example.backend.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private AuthService authService;
 
     @MockitoBean
     private JwtService jwtService;
@@ -95,6 +100,32 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("updateduser"))
                 .andExpect(jsonPath("$.email").value("updated@example.com"));
+    }
+
+    @Test
+    void updateUserWithPasswordChangeReturnsTokens() throws Exception {
+        UpdateUserRequestDto request = new UpdateUserRequestDto();
+        request.setOldPassword("oldpassword");
+        request.setNewPassword("newpassword");
+
+        User updatedUser = new User();
+        updatedUser.setId(1L);
+        updatedUser.setUsername("testuser");
+        updatedUser.setEmail("test@example.com");
+
+        AuthResponseDto authResponse = new AuthResponseDto("newAccessToken", "newRefreshToken");
+
+        when(userService.updateUser(eq(1L), any(UpdateUserRequestDto.class))).thenReturn(updatedUser);
+        when(authService.issueTokenPair(any(User.class))).thenReturn(authResponse);
+
+        mockMvc.perform(put("/api/users/1")
+                .with(authentication(new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.accessToken").value("newAccessToken"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().value("refreshToken", "newRefreshToken"));
     }
 
     @Test

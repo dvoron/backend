@@ -54,7 +54,7 @@ public class AuthService {
         sessionService.revokeSessionByToken(rawRefreshToken);
     }
 
-    private AuthResponseDto issueTokenPair(User user) {
+    public AuthResponseDto issueTokenPair(User user) {
         SessionCreateResult session = sessionService.createSession(user.getId());
         String accessToken = jwtService.generateToken(user, session.sessionId());
         return new AuthResponseDto(accessToken, session.rawRefreshToken());

@@ -127,6 +127,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public User updateUser(Long id, UpdateUserRequestDto dto) {
         if (dto.getEmail() != null) {
             dto.setEmail(dto.getEmail().toLowerCase());
