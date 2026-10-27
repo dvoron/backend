@@ -88,9 +88,15 @@ public class AuthController {
 
     @Operation(summary = "Logout user", description = "Invalidates current user session")
     @PostMapping("/logout")
-    public void logout(@Parameter(hidden = true) Authentication authentication, HttpServletResponse response) {
-        UUID sessionId = (UUID) authentication.getCredentials();
-        authService.logout(sessionId);
+    public void logout(@Parameter(hidden = true) Authentication authentication, 
+                       @CookieValue(name = "refreshToken", required = false) String refreshToken,
+                       HttpServletResponse response) {
+        if (authentication != null && authentication.getCredentials() instanceof UUID) {
+            UUID sessionId = (UUID) authentication.getCredentials();
+            authService.logout(sessionId);
+        } else if (refreshToken != null && !refreshToken.trim().isEmpty()) {
+            authService.logoutByRefreshToken(refreshToken);
+        }
         clearRefreshTokenCookie(response);
     }
 }

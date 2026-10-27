@@ -50,6 +50,10 @@ public class AuthService {
         sessionService.revokeSession(sessionId);
     }
 
+    public void logoutByRefreshToken(String rawRefreshToken) {
+        sessionService.revokeSessionByToken(rawRefreshToken);
+    }
+
     private AuthResponseDto issueTokenPair(User user) {
         SessionCreateResult session = sessionService.createSession(user.getId());
         String accessToken = jwtService.generateToken(user, session.sessionId());

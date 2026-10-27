@@ -80,13 +80,27 @@ public class SessionService {
         UserSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
         session.setRevoked(true);
+        session.setRevokedAt(Instant.now());
         sessionRepository.save(session);
+    }
+
+    public void revokeSessionByToken(String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.trim().isEmpty()) {
+            return;
+        }
+        sessionRepository.findByRefreshTokenHash(hash(rawRefreshToken))
+                .ifPresent(session -> {
+                    session.setRevoked(true);
+                    session.setRevokedAt(Instant.now());
+                    sessionRepository.save(session);
+                });
     }
 
     public void revokeAllUserSessions(Long userId) {
         List<UserSession> sessions = sessionRepository.findByUserId(userId);
         for (UserSession session : sessions) {
             session.setRevoked(true);
+            session.setRevokedAt(Instant.now());
         }
         sessionRepository.saveAll(sessions);
     }

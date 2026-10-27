@@ -128,8 +128,19 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/logout")
                 .with(authentication(new UsernamePasswordAuthenticationToken(1L, sessionId, List.of(new SimpleGrantedAuthority("ROLE_USER"))))))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", ""));
 
         verify(authService).logout(sessionId);
+    }
+
+    @Test
+    void logoutReturnsOkUnauthenticatedWithRefreshToken() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                .cookie(new Cookie("refreshToken", "myRefreshToken")))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.cookie().value("refreshToken", ""));
+
+        verify(authService).logoutByRefreshToken("myRefreshToken");
     }
 }

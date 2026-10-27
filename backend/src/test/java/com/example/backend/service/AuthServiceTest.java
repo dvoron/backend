@@ -109,4 +109,13 @@ class AuthServiceTest {
 
         verify(sessionService, times(1)).revokeSession(sessionId);
     }
+
+    @Test
+    void logoutByRefreshTokenRevokesSession() {
+        String rawRefreshToken = "myRefreshToken";
+
+        authService.logoutByRefreshToken(rawRefreshToken);
+
+        verify(sessionService, times(1)).revokeSessionByToken(rawRefreshToken);
+    }
 }
