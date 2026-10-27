@@ -18,12 +18,12 @@ This is the backend service for the application, built with Spring Boot.
 
    **Linux/macOS:**
    ```bash
-   ./mvnw spring-boot:run
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
    **Windows:**
    ```cmd
-   mvnw.cmd spring-boot:run
+   mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
 ## Development Notes
