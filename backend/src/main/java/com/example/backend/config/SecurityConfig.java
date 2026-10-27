@@ -50,7 +50,7 @@ public class SecurityConfig {
                     }
                     auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/forum/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/forum/posts", "/api/forum/posts/*/comments", "/api/forum/comments/*/replies", "/api/forum/users/*/posts", "/api/forum/users/*/comments").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",

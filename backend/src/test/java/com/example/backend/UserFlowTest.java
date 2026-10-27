@@ -164,9 +164,13 @@ class UserFlowTest {
                 .anyMatch(p -> "[deleted user]".equals(p.getAuthor()));
         assert(postAnonymised) : "Post should be anonymised when user is deleted";
 
-        boolean commentAnonymised = Arrays.stream(allPosts)
-                .filter(p -> p.getId().equals(postId))
-                .flatMap(p -> p.getComments() != null ? p.getComments().stream() : java.util.stream.Stream.empty())
+        MvcResult postCommentsResult = mockMvc.perform(get("/api/forum/posts/" + postId + "/comments"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        CommentDto[] postComments = objectMapper.readValue(postCommentsResult.getResponse().getContentAsString(), CommentDto[].class);
+
+        boolean commentAnonymised = Arrays.stream(postComments)
                 .anyMatch(c -> "[deleted user]".equals(c.getAuthor()));
         assert(commentAnonymised) : "Comments should be anonymised when user is deleted";
     }

@@ -60,11 +60,6 @@ public class UserService {
     public User signIn(LoginRequestDto userLoginRequest) {
         String login = userLoginRequest.getLogin().toLowerCase();
         
-        if (loginAttemptService.isBlocked(login)) {
-            log.warn("Login attempt blocked for user: {}", login);
-            throw new AccountLockedException("Account locked due to too many failed login attempts");
-        }
-        
         Optional<User> userOpt;
         if (login.contains("@")) {
             userOpt = userRepository.findByEmail(login);
@@ -72,10 +67,17 @@ public class UserService {
             userOpt = userRepository.findByUsername(login);
         }
 
+        String attemptKey = userOpt.isPresent() ? userOpt.get().getUsername() : login;
+
+        if (loginAttemptService.isBlocked(attemptKey)) {
+            log.warn("Login attempt blocked for user/key: {}", attemptKey);
+            throw new AccountLockedException("Account locked due to too many failed login attempts");
+        }
+
         if (userOpt.isPresent()) {
             if (passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
-                log.info("Success for user: {}", login);
-                loginAttemptService.loginSucceeded(login);
+                log.info("Success for user: {}", userOpt.get().getUsername());
+                loginAttemptService.loginSucceeded(userOpt.get().getUsername());
                 return userOpt.get();
             }
         } else {
@@ -84,7 +86,11 @@ public class UserService {
         }
         
         log.warn("Login failed: User not found or wrong password for login: {}", login);
-        loginAttemptService.loginFailed(login);
+        if (userOpt.isPresent()) {
+            loginAttemptService.loginFailed(userOpt.get().getUsername());
+        } else {
+            loginAttemptService.loginFailed(login);
+        }
         throw new WrongLoginCredentialsException();
     }
 
