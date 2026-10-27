@@ -1,6 +1,8 @@
 package com.example.backend.model.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Formula;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,9 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
+
+    @Formula("(SELECT count(*) FROM comments c WHERE c.post_id = id AND c.parent_comment_id IS NULL)")
+    private int commentCount;
 
     public Post() {}
 
@@ -75,5 +80,13 @@ public class Post {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public int getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
     }
 }

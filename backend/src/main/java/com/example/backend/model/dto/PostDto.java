@@ -10,6 +10,7 @@ public class PostDto {
     private String content;
     private Instant timestamp;
     private List<CommentDto> comments;
+    private int commentCount;
 
     public PostDto() {}
 
@@ -59,5 +60,13 @@ public class PostDto {
 
     public void setComments(List<CommentDto> comments) {
         this.comments = comments;
+    }
+
+    public int getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
     }
 }

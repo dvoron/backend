@@ -1,6 +1,8 @@
 package com.example.backend.model.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Formula;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,9 @@ public class Comment {
 
     @OneToMany(mappedBy = "parentComment")
     private List<Comment> replies = new ArrayList<>();
+
+    @Formula("(SELECT count(*) FROM comments c WHERE c.parent_comment_id = id)")
+    private int replyCount;
 
     public Comment() {}
 
@@ -89,5 +94,13 @@ public class Comment {
 
     public void setReplies(List<Comment> replies) {
         this.replies = replies;
+    }
+
+    public int getReplyCount() {
+        return replyCount;
+    }
+
+    public void setReplyCount(int replyCount) {
+        this.replyCount = replyCount;
     }
 }

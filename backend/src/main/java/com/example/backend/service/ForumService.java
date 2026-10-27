@@ -113,12 +113,8 @@ public class ForumService {
         }
         
         dto.setTimestamp(post.getTimestamp());
-
-        List<CommentDto> comments = post.getComments().stream()
-                .filter(c -> c.getParentComment() == null) // only top level
-                .map(c -> mapToDto(c, 5))
-                .collect(Collectors.toList());
-        dto.setComments(comments);
+        dto.setCommentCount(post.getCommentCount());
+        dto.setComments(new java.util.ArrayList<>());
 
         return dto;
     }
@@ -145,14 +141,14 @@ public class ForumService {
             dto.setPostId(comment.getPost().getId());
         }
 
+        dto.setReplyCount(comment.getReplyCount());
+        
         if (depth > 0) {
             List<CommentDto> replies = comment.getReplies().stream()
                     .map(c -> mapToDto(c, depth - 1))
                     .collect(Collectors.toList());
             dto.setReplies(replies);
-            dto.setReplyCount(replies.size());
         } else {
-            dto.setReplyCount(comment.getReplies() != null ? comment.getReplies().size() : 0);
             dto.setReplies(new java.util.ArrayList<>());
         }
 
@@ -160,12 +156,22 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentDto> getRepliesForComment(Long commentId) {
-        Comment parentComment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
-        
-        return parentComment.getReplies().stream()
-                .map(c -> mapToDto(c, 5))
-                .collect(Collectors.toList());
+    public List<CommentDto> getCommentsForPost(Long postId, int page, int size) {
+        if (!postRepository.existsById(postId)) {
+            throw new ResourceNotFoundException("Post not found");
+        }
+        Page<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNullOrderByTimestampDesc(
+                postId, PageRequest.of(page, size));
+        return comments.stream().map(c -> mapToDto(c, 5)).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentDto> getRepliesForComment(Long commentId, int page, int size) {
+        if (!commentRepository.existsById(commentId)) {
+            throw new ResourceNotFoundException("Comment not found");
+        }
+        Page<Comment> replies = commentRepository.findByParentCommentIdOrderByTimestampDesc(
+                commentId, PageRequest.of(page, size));
+        return replies.stream().map(c -> mapToDto(c, 5)).collect(Collectors.toList());
     }
 }

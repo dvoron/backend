@@ -67,10 +67,25 @@ public class ForumController {
         return ResponseEntity.ok(comments);
     }
 
-    @Operation(summary = "Get comment replies", description = "Retrieves a list of replies for a specific comment")
+    @Operation(summary = "Get post comments", description = "Retrieves a paginated list of top-level comments for a post")
+    @GetMapping("/posts/{postId}/comments")
+    public ResponseEntity<List<CommentDto>> getPostComments(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        int cappedSize = Math.min(Math.max(1, size), 50);
+        List<CommentDto> comments = forumService.getCommentsForPost(postId, Math.max(0, page), cappedSize);
+        return ResponseEntity.ok(comments);
+    }
+
+    @Operation(summary = "Get comment replies", description = "Retrieves a paginated list of replies for a specific comment")
     @GetMapping("/comments/{commentId}/replies")
-    public ResponseEntity<List<CommentDto>> getCommentReplies(@PathVariable Long commentId) {
-        List<CommentDto> replies = forumService.getRepliesForComment(commentId);
+    public ResponseEntity<List<CommentDto>> getCommentReplies(
+            @PathVariable Long commentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        int cappedSize = Math.min(Math.max(1, size), 50);
+        List<CommentDto> replies = forumService.getRepliesForComment(commentId, Math.max(0, page), cappedSize);
         return ResponseEntity.ok(replies);
     }
 }
