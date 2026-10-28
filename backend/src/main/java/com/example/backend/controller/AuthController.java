@@ -6,6 +6,7 @@ import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -58,6 +59,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Login user", description = "Authenticates user credentials and returns JWT access and refresh tokens")
+    @SecurityRequirements()
     @PostMapping("/login")
     public AuthResponseDto login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
         AuthResponseDto authResponse = authService.login(request);
@@ -66,6 +68,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Register user", description = "Registers a new user and returns JWT access and refresh tokens")
+    @SecurityRequirements()
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponseDto register(@Valid @RequestBody RegisterRequestDto request, HttpServletResponse response) {

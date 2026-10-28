@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.exception.BadRequestException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
@@ -11,7 +12,6 @@ import com.example.backend.model.entity.User;
 import com.example.backend.repository.CommentRepository;
 import com.example.backend.repository.PostRepository;
 import com.example.backend.repository.UserRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +73,7 @@ public class ForumService {
                     .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
             
             if (parentComment.getPost() == null || !parentComment.getPost().getId().equals(request.getPostId())) {
-                throw new IllegalArgumentException("Parent comment does not belong to the specified post");
+                throw new BadRequestException("Parent comment does not belong to the specified post");
             }
         }
 
@@ -160,7 +160,7 @@ public class ForumService {
         if (!postRepository.existsById(postId)) {
             throw new ResourceNotFoundException("Post not found");
         }
-        Page<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNullOrderByTimestampDesc(
+        List<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNullOrderByTimestampDesc(
                 postId, PageRequest.of(page, size));
         return comments.stream().map(c -> mapToDto(c, 5)).collect(Collectors.toList());
     }
@@ -170,7 +170,7 @@ public class ForumService {
         if (!commentRepository.existsById(commentId)) {
             throw new ResourceNotFoundException("Comment not found");
         }
-        Page<Comment> replies = commentRepository.findByParentCommentIdOrderByTimestampDesc(
+        List<Comment> replies = commentRepository.findByParentCommentIdOrderByTimestampDesc(
                 commentId, PageRequest.of(page, size));
         return replies.stream().map(c -> mapToDto(c, 5)).collect(Collectors.toList());
     }

@@ -3,6 +3,7 @@ package com.example.backend.config;
 import com.example.backend.service.JwtService;
 import com.example.backend.service.SessionService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,7 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-        } catch (Exception ignored) {
+        } catch (JwtException | IllegalArgumentException ignored) {
             // Invalid token - request continues unauthenticated
         }
 

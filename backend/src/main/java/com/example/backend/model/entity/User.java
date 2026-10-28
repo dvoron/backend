@@ -1,6 +1,5 @@
 package com.example.backend.model.entity;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -10,7 +9,6 @@ import java.util.List;
 @Table(name = "users")
 public class User {
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

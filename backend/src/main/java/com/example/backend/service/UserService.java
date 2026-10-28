@@ -2,11 +2,7 @@ package com.example.backend.service;
 
 
 
-import com.example.backend.exception.AccountLockedException;
-import com.example.backend.exception.EmailAlreadyTakenException;
-import com.example.backend.exception.ResourceNotFoundException;
-import com.example.backend.exception.UsernameAlreadyTakenException;
-import com.example.backend.exception.WrongLoginCredentialsException;
+import com.example.backend.exception.*;
 import com.example.backend.model.dto.LoginRequestDto;
 import com.example.backend.model.dto.RegisterRequestDto;
 import com.example.backend.model.dto.UpdateUserRequestDto;
@@ -70,13 +66,13 @@ public class UserService {
         String attemptKey = userOpt.isPresent() ? userOpt.get().getUsername() : login;
 
         if (loginAttemptService.isBlocked(attemptKey)) {
-            log.warn("Login attempt blocked for user/key: {}", attemptKey);
+            log.warn("Login attempt blocked");
             throw new AccountLockedException("Account locked due to too many failed login attempts");
         }
 
         if (userOpt.isPresent()) {
             if (passwordEncoder.matches(userLoginRequest.getPassword(), userOpt.get().getPassword())) {
-                log.info("Success for user: {}", userOpt.get().getUsername());
+                log.info("Login success");
                 loginAttemptService.loginSucceeded(userOpt.get().getUsername());
                 return userOpt.get();
             }
@@ -85,7 +81,7 @@ public class UserService {
             passwordEncoder.matches(userLoginRequest.getPassword(), dummyPasswordHash);
         }
         
-        log.warn("Login failed: User not found or wrong password for login: {}", login);
+        log.warn("Login failed");
         if (userOpt.isPresent()) {
             loginAttemptService.loginFailed(userOpt.get().getUsername());
         } else {
@@ -101,7 +97,7 @@ public class UserService {
         if (request.getUsername() != null) {
             String trimmedUsername = request.getUsername().trim();
             if (trimmedUsername.contains("@")) {
-                throw new IllegalArgumentException("Username cannot contain '@'");
+                throw new BadRequestException("Username cannot contain '@'");
             }
             request.setUsername(trimmedUsername.toLowerCase());
         }
@@ -142,28 +138,25 @@ public class UserService {
                         new ResourceNotFoundException("User not found"));
 
         if (loginAttemptService.isBlocked(existingUser.getUsername())) {
-            log.warn("Update attempt blocked for user: {}", existingUser.getUsername());
+            log.warn("Update attempt blocked");
             throw new AccountLockedException("Account locked due to too many failed login attempts");
         }
 
         boolean isEmailChanged = dto.getEmail() != null && !dto.getEmail().isEmpty() && !dto.getEmail().equals(existingUser.getEmail());
         
-        if (dto.getNewPassword() != null && dto.getNewPassword().trim().isEmpty()) {
-            throw new IllegalArgumentException("Password must not be blank");
-        }
         boolean isPasswordChanged = dto.getNewPassword() != null && !dto.getNewPassword().isEmpty();
         
         if (isEmailChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
                 loginAttemptService.loginFailed(existingUser.getUsername());
-                throw new IllegalArgumentException("Current password is required to change email");
+                throw new BadRequestException("Current password is required to change email");
             }
         }
 
         if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
             String trimmedUsername = dto.getUsername().trim();
             if (trimmedUsername.contains("@")) {
-                throw new IllegalArgumentException("Username cannot contain '@'");
+                throw new BadRequestException("Username cannot contain '@'");
             }
             Optional<User> byUsername = userRepository.findByUsername(trimmedUsername);
             if (byUsername.isPresent() && !byUsername.get().getId().equals(id)) {
@@ -181,7 +174,7 @@ public class UserService {
         if (isPasswordChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
                 loginAttemptService.loginFailed(existingUser.getUsername());
-                throw new IllegalArgumentException("Invalid old password");
+                throw new BadRequestException("Invalid old password");
             }
             String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
             existingUser.setPassword(hashedPassword);
@@ -220,13 +213,13 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         if (loginAttemptService.isBlocked(user.getUsername())) {
-            log.warn("Delete attempt blocked for user: {}", user.getUsername());
+            log.warn("Delete attempt blocked");
             throw new AccountLockedException("Account locked due to too many failed login attempts");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             loginAttemptService.loginFailed(user.getUsername());
-            throw new IllegalArgumentException("Invalid password");
+            throw new BadRequestException("Invalid password");
         }
         
         loginAttemptService.loginSucceeded(user.getUsername());

@@ -13,10 +13,10 @@ public class UpdateUserRequestDto {
     @Size(max = 255)
     private String email;
     
-    @Size(min = 8, max = 255)
+    @Size(min = 8, max = 72)
     private String oldPassword;
     
-    @Size(min = 8, max = 255)
+    @Size(min = 8, max = 72)
     @Pattern(regexp = ".*\\S.*", message = "Password must not be blank")
     private String newPassword;
 

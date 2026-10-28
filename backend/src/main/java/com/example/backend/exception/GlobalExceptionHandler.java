@@ -62,10 +62,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(com.example.backend.exception.BadRequestException ex) {
+        log.warn("Bad request exception: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("BAD_REQUEST", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Illegal argument exception: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("BAD_REQUEST", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("BAD_REQUEST", "Invalid request parameters");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
@@ -105,7 +112,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         if (statusCode instanceof HttpStatus status) {
             code = status.name();
         }
-        ErrorResponse error = new ErrorResponse(code, "An unexpected error occurred");
+        String msg = (statusCode.is4xxClientError()) ? ex.getMessage() : "An unexpected error occurred";
+        ErrorResponse error = new ErrorResponse(code, msg);
         return ResponseEntity.status(statusCode).headers(headers).body(error);
     }
 
