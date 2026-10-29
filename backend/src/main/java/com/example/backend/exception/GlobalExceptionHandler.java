@@ -62,6 +62,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
 
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPassword(InvalidPasswordException ex) {
+        log.warn("Invalid password exception: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("INVALID_PASSWORD", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(com.example.backend.exception.BadRequestException ex) {
         log.warn("Bad request exception: {}", ex.getMessage());

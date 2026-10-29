@@ -149,7 +149,7 @@ public class UserService {
         if (isEmailChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
                 loginAttemptService.loginFailed(existingUser.getUsername());
-                throw new BadRequestException("Current password is required to change email");
+                throw new InvalidPasswordException("Current password is required to change email");
             }
         }
 
@@ -174,7 +174,7 @@ public class UserService {
         if (isPasswordChanged) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), existingUser.getPassword())) {
                 loginAttemptService.loginFailed(existingUser.getUsername());
-                throw new BadRequestException("Invalid old password");
+                throw new InvalidPasswordException("Invalid old password");
             }
             String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
             existingUser.setPassword(hashedPassword);
@@ -219,7 +219,7 @@ public class UserService {
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             loginAttemptService.loginFailed(user.getUsername());
-            throw new BadRequestException("Invalid password");
+            throw new InvalidPasswordException("Invalid password");
         }
         
         loginAttemptService.loginSucceeded(user.getUsername());
