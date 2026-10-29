@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.exception.EmailAlreadyTakenException;
+import com.example.backend.exception.InvalidPasswordException;
 import com.example.backend.exception.UsernameAlreadyTakenException;
 import com.example.backend.exception.WrongLoginCredentialsException;
 import com.example.backend.model.dto.LoginRequestDto;
@@ -298,7 +299,7 @@ class UserServiceTest {
         when(passwordEncoder.matches("wrongoldpassword", "oldHashedPassword")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.updateUser(1L, dto))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidPasswordException.class)
                 .hasMessage("Invalid old password");
     }
 
@@ -325,7 +326,7 @@ class UserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
 
         assertThatThrownBy(() -> userService.updateUser(1L, dto))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidPasswordException.class)
                 .hasMessage("Current password is required to change email");
     }
 

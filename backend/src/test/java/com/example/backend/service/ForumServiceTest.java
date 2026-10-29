@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.exception.BadRequestException;
 import com.example.backend.model.dto.CommentDto;
 import com.example.backend.model.dto.CreateCommentRequest;
 import com.example.backend.model.dto.CreatePostRequest;
@@ -251,7 +252,7 @@ class ForumServiceTest {
         when(commentRepository.findById(2L)).thenReturn(Optional.of(parentComment));
 
         assertThatThrownBy(() -> forumService.createComment(request, 1L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage("Parent comment does not belong to the specified post");
     }
 

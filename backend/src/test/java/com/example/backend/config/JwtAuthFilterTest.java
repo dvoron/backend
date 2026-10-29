@@ -3,6 +3,7 @@ package com.example.backend.config;
 import com.example.backend.service.JwtService;
 import com.example.backend.service.SessionService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.impl.DefaultClaims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -93,7 +94,7 @@ class JwtAuthFilterTest {
         String token = "invalid.token.here";
         
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtService.validate(token)).thenThrow(new RuntimeException("Invalid token"));
+        when(jwtService.validate(token)).thenThrow(new MalformedJwtException("Invalid token"));
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
