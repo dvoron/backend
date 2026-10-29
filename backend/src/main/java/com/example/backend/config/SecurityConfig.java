@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -46,7 +47,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> {
                     if (env.acceptsProfiles(Profiles.of("dev"))) {
-                        auth.requestMatchers("/h2-console/**").permitAll();
+                        auth.requestMatchers(PathRequest.toH2Console()).permitAll();
                     }
                     auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
