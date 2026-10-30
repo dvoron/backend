@@ -4,7 +4,7 @@ This is the backend service for the application, built with Spring Boot.
 
 ## Prerequisites
 
-- **Java 27** must be installed on your system.
+- **Java 21** must be installed on your system.
 
 ## Setup Instructions
 
@@ -13,7 +13,7 @@ This is the backend service for the application, built with Spring Boot.
    cd backend
    ```
 
-3. **Run the Application:**
+2. **Run the Application:**
    You do not need to install Maven globally, as the project includes the Maven wrapper. Run one of the following commands depending on your operating system:
 
    **Linux/macOS:**
@@ -24,6 +24,19 @@ This is the backend service for the application, built with Spring Boot.
    **Windows:**
    ```cmd
    mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+3. **Run Tests:**
+   To run the test suite and generate a coverage report, use:
+
+   **Linux/macOS:**
+   ```bash
+   ./mvnw test
+   ```
+
+   **Windows:**
+   ```cmd
+   mvnw.cmd test
    ```
 
 ## Development Notes
