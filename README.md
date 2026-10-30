@@ -8,22 +8,30 @@ This is the backend service for the application, built with Spring Boot.
 
 ## Setup Instructions
 
-1. **Navigate to the project folder:**
-   ```bash
-   cd backend
-   ```
-
-2. **Run the Application:**
+1. **Run the Application:**
    You do not need to install Maven globally, as the project includes the Maven wrapper. Run one of the following commands depending on your operating system:
 
    **Linux/macOS:**
    ```bash
-   ./mvnw spring-boot:run
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
    **Windows:**
    ```cmd
-   mvnw.cmd spring-boot:run
+   mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+2. **Run Tests:**
+   To run the test suite and generate a coverage report, use:
+
+   **Linux/macOS:**
+   ```bash
+   ./mvnw test
+   ```
+
+   **Windows:**
+   ```cmd
+   mvnw.cmd test
    ```
 
 ## Development Notes
